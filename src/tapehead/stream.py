@@ -1,7 +1,7 @@
 from collections.abc import AsyncIterator
 
-from hermes.delta import AnyDelta
-from hermes.tapes.frame import Frame
+from tapehead.delta import AnyDelta
+from tapehead.tapes.frame import Frame
 
 type StreamItem = Frame | AnyDelta
 

@@ -1,14 +1,14 @@
-# hermes
+# tapehead
 
-基于磁带 (Tape) 的 agent 框架.
+基于磁带 (Tape) 的 agent 框架. 名字取自录音机的磁头: 录制时写带, 回放时读带.
 
 ## 核心概念
 
-以下概念已经确定, 后续设计都以它们为前提. 仍在讨论中的问题见 [#1](https://github.com/rainzee/hermes/issues/1).
+以下概念已经确定, 后续设计都以它们为前提. 仍在讨论中的问题见 [#1](https://github.com/rainzee/tapehead/issues/1).
 
 ### Tape
 
-**Tape (磁带) 是 hermes 的核心概念.** agent 发生过的一切都录在磁带上, 磁带是唯一的事实来源.
+**Tape (磁带) 是 tapehead 的核心概念.** agent 发生过的一切都录在磁带上, 磁带是唯一的事实来源.
 
 其他概念都围绕磁带展开, 而不是反过来:
 

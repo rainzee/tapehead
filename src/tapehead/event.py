@@ -2,8 +2,8 @@ from typing import Any, Literal
 
 from msgspec import Struct
 
-from hermes.delta import AnyDelta
-from hermes.message import Message
+from tapehead.delta import AnyDelta
+from tapehead.message import Message
 
 
 class Event(Struct, tag=True):

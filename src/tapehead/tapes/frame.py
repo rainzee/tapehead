@@ -1,6 +1,6 @@
 from msgspec import Struct
 
-from hermes.event import AnyEvent
+from tapehead.event import AnyEvent
 
 
 class Frame(Struct):

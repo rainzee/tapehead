@@ -1,8 +1,8 @@
 from collections.abc import Sequence
 
-from hermes.event import AnyEvent
-from hermes.message import Message
-from hermes.tapes.frame import Frame
+from tapehead.event import AnyEvent
+from tapehead.message import Message
+from tapehead.tapes.frame import Frame
 
 
 def cue(frames: Sequence[Frame]) -> int:

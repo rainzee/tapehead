@@ -1,4 +1,4 @@
-from hermes.stream import AsyncStreamEvents
+from tapehead.stream import AsyncStreamEvents
 
 
 class Agent:

@@ -1,8 +1,8 @@
 from typing import Literal, Protocol
 
-from hermes.event import AnyEvent
-from hermes.tapes.frame import Frame
-from hermes.tapes.header import TapeHeader
+from tapehead.event import AnyEvent
+from tapehead.tapes.frame import Frame
+from tapehead.tapes.header import TapeHeader
 
 type Access = Literal["read", "write"]
 

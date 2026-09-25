@@ -1,7 +1,7 @@
 from typing import Protocol
 
-from hermes.tapes.header import TapeHeader
-from hermes.tapes.tape import Access, Tape
+from tapehead.tapes.header import TapeHeader
+from tapehead.tapes.tape import Access, Tape
 
 
 class Deck(Protocol):
