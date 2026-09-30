@@ -1,6 +1,24 @@
-# tapehead
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/rainzee/tapehead/main/assets/logo-dark.svg">
+    <img src="https://raw.githubusercontent.com/rainzee/tapehead/main/assets/logo.svg" width="120" alt="tapehead">
+  </picture>
+</p>
 
-基于磁带 (Tape) 的 agent 框架. 名字取自录音机的磁头: 录制时写带, 回放时读带.
+<h1 align="center">tapehead</h1>
+
+<p align="center">
+  基于磁带 (Tape) 的 agent 框架<br>
+  名字取自录音机的磁头: 录制时写带, 回放时读带
+</p>
+
+<p align="center">
+  <a href="https://pypi.org/project/tapehead/"><img src="https://img.shields.io/pypi/v/tapehead?color=2b2118&labelColor=e9b44c&label=pypi" alt="PyPI"></a>
+  <img src="https://img.shields.io/badge/python-3.13%2B-2b2118?labelColor=e9b44c" alt="Python 3.13+">
+  <img src="https://img.shields.io/badge/status-sketch-2b2118?labelColor=e9b44c" alt="status: sketch">
+</p>
+
+---
 
 ## 核心概念
 
