@@ -1,6 +1,6 @@
 from collections.abc import AsyncIterator, Sequence
 
-import msgspec
+from msgspec.json import decode
 
 from tapehead.delta import AnyDelta, TextDelta, ToolUseDelta
 from tapehead.event import (
@@ -70,7 +70,7 @@ class Head:
             return f"未知工具: {use.name}", True
 
         try:
-            return await tool.call(msgspec.json.decode(use.arguments, type=tool.args)), False
+            return await tool.call(decode(use.arguments, type=tool.args)), False
         except Exception as error:  # noqa: BLE001 工具的任何失败都交还给模型
             return f"{type(error).__name__}: {error}", True
 

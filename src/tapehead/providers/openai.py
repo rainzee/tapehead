@@ -2,7 +2,8 @@ from collections.abc import AsyncIterator, Sequence
 from typing import Any
 
 import httpx
-import msgspec
+from msgspec import Struct
+from msgspec.json import Decoder
 
 from tapehead.delta import AnyDelta, ReasoningDelta, TextDelta
 from tapehead.event import Usage
@@ -10,13 +11,13 @@ from tapehead.message import Message
 from tapehead.tool import Tool
 
 
-class PromptDetails(msgspec.Struct):
+class PromptDetails(Struct):
     """chunk 里的提示词用量明细"""
 
     cached_tokens: int | None = None
 
 
-class ChunkUsage(msgspec.Struct):
+class ChunkUsage(Struct):
     """chunk 里的 token 用量"""
 
     prompt_tokens: int
@@ -24,7 +25,7 @@ class ChunkUsage(msgspec.Struct):
     prompt_tokens_details: PromptDetails | None = None
 
 
-class ChoiceDelta(msgspec.Struct):
+class ChoiceDelta(Struct):
     """chunk 里的增量, 推理内容在不同 vLLM 版本里叫 reasoning_content 或 reasoning"""
 
     content: str | None = None
@@ -32,13 +33,13 @@ class ChoiceDelta(msgspec.Struct):
     reasoning: str | None = None
 
 
-class Choice(msgspec.Struct):
+class Choice(Struct):
     """chunk 里的一个候选"""
 
     delta: ChoiceDelta
 
 
-class Chunk(msgspec.Struct):
+class Chunk(Struct):
     """流式响应里的一个 chunk, 用量在 choices 为空的最后一个 chunk 里"""
 
     choices: list[Choice] = []
@@ -75,7 +76,7 @@ class OpenAIModel:
             "stream_options": {"include_usage": True},
             **self.extra_body,
         }
-        decoder = msgspec.json.Decoder(Chunk)
+        decoder = Decoder(Chunk)
         async with (
             httpx.AsyncClient(timeout=httpx.Timeout(self.timeout, connect=10)) as client,
             client.stream(

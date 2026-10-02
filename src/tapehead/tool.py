@@ -6,8 +6,8 @@ from collections.abc import Callable
 from types import FunctionType
 from typing import Any, overload
 
-import msgspec
-from msgspec import Struct
+from msgspec import Struct, defstruct
+from msgspec.json import encode
 
 
 def derive_args(func: FunctionType, name: str) -> type[Struct]:
@@ -19,7 +19,7 @@ def derive_args(func: FunctionType, name: str) -> type[Struct]:
         annotation = hints.get(param.name, Any)
         fields.append((param.name, annotation) if param.default is param.empty else (param.name, annotation, param.default))
 
-    return msgspec.defstruct(name, fields)
+    return defstruct(name, fields)
 
 
 class Tool:
@@ -51,7 +51,7 @@ class Tool:
             run = functools.partial(self.func, args)
         result = await run() if inspect.iscoroutinefunction(self.func) else await asyncio.to_thread(run)
 
-        return result if isinstance(result, str) else msgspec.json.encode(result).decode()
+        return result if isinstance(result, str) else encode(result).decode()
 
 
 @overload
