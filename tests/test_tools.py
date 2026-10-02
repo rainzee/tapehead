@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Annotated, Any
 
 import pytest
-from msgspec import Meta, Struct
+from msgspec import Meta
 
 from tapehead.delta import AnyDelta, TextDelta, ToolUseDelta
 from tapehead.event import ToolResult, TurnEnd
@@ -14,22 +14,14 @@ from tapehead.media.mem import MemTape
 from tapehead.message import Message
 from tapehead.tapes.header import TapeHeader
 from tapehead.tapes.play import play
-from tapehead.tool import Tool
+from tapehead.tool import Tool, tool
 
 
-class ReadFileArgs(Struct):
-    """读文件的参数"""
+@tool
+async def read_file(path: Annotated[str, Meta(description="文件路径")]) -> str:
+    """读取一个 UTF-8 文本文件"""
 
-    path: Annotated[str, Meta(description="文件路径")]
-
-
-class ReadFile:
-    name = "read_file"
-    description = "读取一个 UTF-8 文本文件"
-    args = ReadFileArgs
-
-    async def call(self, args: ReadFileArgs) -> str:
-        return Path(args.path).read_text(encoding="utf-8")
+    return Path(path).read_text(encoding="utf-8")
 
 
 class ReadsThenAnswers:
@@ -54,7 +46,7 @@ async def test_agent_reads_a_file_before_answering(tmp_path: Path) -> None:
     note.write_text("明天下午三点开会", encoding="utf-8")
     tape = MemTape(TapeHeader(name="chat", created_at=time.time()))
 
-    async for _ in await Head(ReadsThenAnswers(), [ReadFile()]).run(tape, f"读一下 {note}"):
+    async for _ in await Head(ReadsThenAnswers(), [read_file]).run(tape, f"读一下 {note}"):
         pass
 
     messages = play(await tape.read())
@@ -70,7 +62,7 @@ async def test_a_failing_tool_is_reported_to_the_model(tmp_path: Path) -> None:
 
     tape = MemTape(TapeHeader(name="chat", created_at=time.time()))
 
-    async for _ in await Head(ReadsThenAnswers(), [ReadFile()]).run(tape, f"读一下 {tmp_path / 'missing.txt'}"):
+    async for _ in await Head(ReadsThenAnswers(), [read_file]).run(tape, f"读一下 {tmp_path / 'missing.txt'}"):
         pass
 
     events = [frame.event for frame in await tape.read()]
