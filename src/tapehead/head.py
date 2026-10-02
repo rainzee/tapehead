@@ -1,7 +1,7 @@
 from collections.abc import AsyncIterator
 
 from tapehead.delta import TextDelta
-from tapehead.event import AssistantMessage, StepEnd, StepStart, TurnEnd, TurnStart, UserMessage
+from tapehead.event import AssistantMessage, StepEnd, StepStart, TurnEnd, TurnStart, Usage, UserMessage
 from tapehead.message import Message
 from tapehead.model import Model
 from tapehead.stream import AsyncStreamEvents, StreamItem
@@ -34,11 +34,15 @@ class Head:
             yield frame
         messages = play(await tape.read())
         deltas = []
-        async for delta in self.model.stream(messages):
-            deltas.append(delta)
-            yield delta
+        usage = None
+        async for item in self.model.stream(messages):
+            if isinstance(item, Usage):
+                usage = item
+                continue
+            deltas.append(item)
+            yield item
         text = "".join(delta.text for delta in deltas if isinstance(delta, TextDelta))
 
-        reply = AssistantMessage(turn=turn, step=0, message=Message(role="assistant", content=text), stream=deltas)
+        reply = AssistantMessage(turn=turn, step=0, message=Message(role="assistant", content=text), stream=deltas, usage=usage)
         for frame in await tape.record(reply, StepEnd(turn=turn, step=0), TurnEnd(turn=turn, reason="completed")):
             yield frame

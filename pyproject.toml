@@ -13,12 +13,18 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "httpx>=0.28.1",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
 ]
 
 [project.urls]
 Repository = "https://github.com/rainzee/tapehead"
+
+[project.optional-dependencies]
+openai = [
+    "httpx>=0.28.1",
+]
 
 [build-system]
 requires = ["uv_build>=0.12.17,<0.13.0"]
