@@ -3,7 +3,7 @@ from tapehead.tapes.tape import Access, Tape
 
 
 class DbSilo:
-    """存在数据库里的磁带库, 占位"""
+    """数据库介质磁带库"""
 
     async def create(self, header: TapeHeader) -> Tape:
         raise NotImplementedError

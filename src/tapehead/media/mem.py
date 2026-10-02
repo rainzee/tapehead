@@ -39,7 +39,7 @@ class MemTape:
 
 
 class MemSilo:
-    """内存磁带库"""
+    """内存介质磁带库"""
 
     def __init__(self) -> None:
         self.tapes: dict[str, MemTape] = {}

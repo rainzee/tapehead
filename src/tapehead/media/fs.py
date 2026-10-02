@@ -11,7 +11,7 @@ from tapehead.tapes.tape import Access
 
 
 class FsTape(MemTape):
-    """落在 JSONL 文件里的磁带, 打开时整盘读进内存, 录制时追加写文件"""
+    """文件磁带 JSONL"""
 
     def __init__(self, header: TapeHeader, frames_path: Path) -> None:
         super().__init__(header)
@@ -36,7 +36,7 @@ class FsTape(MemTape):
 
 
 class FsSilo:
-    """把磁带存在一个目录里, 每盘带两个文件, 头和帧"""
+    """文件系统介质磁带库"""
 
     def __init__(self, directory: Path) -> None:
         self.directory = directory
