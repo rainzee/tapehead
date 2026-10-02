@@ -1,5 +1,4 @@
 from collections.abc import AsyncIterator, Sequence
-from typing import Any
 
 import msgspec
 
@@ -45,7 +44,7 @@ def settle(deltas: Sequence[AnyDelta]) -> tuple[str, list[ToolUse]]:
 class Head:
     """磁头, 回放磁带得出上下文, 驱动模型并把结果录回磁带"""
 
-    def __init__(self, model: Model, tools: Sequence[Tool[Any]] = ()) -> None:
+    def __init__(self, model: Model, tools: Sequence[Tool] = ()) -> None:
         self.model = model
         self.tools = list(tools)
 

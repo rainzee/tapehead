@@ -4,26 +4,10 @@ import inspect
 import typing
 from collections.abc import Callable
 from types import FunctionType
-from typing import Any, Protocol, overload
+from typing import Any, overload
 
 import msgspec
 from msgspec import Struct
-
-
-class Tool[A: Struct](Protocol):
-    """工具, 由宿主提供, 参数用一个 Struct 声明, schema 和校验都出自它"""
-
-    name: str
-    description: str
-    args: type[A]
-
-    async def call(self, args: A) -> str:
-        """执行一次调用, 返回给模型看的结果, 失败时直接抛异常
-
-        参数
-        - args: 已经校验过的参数
-        """
-        ...
 
 
 def derive_args(func: FunctionType, name: str) -> type[Struct]:
@@ -38,8 +22,8 @@ def derive_args(func: FunctionType, name: str) -> type[Struct]:
     return msgspec.defstruct(name, fields)
 
 
-class FunctionTool:
-    """由函数包装出的工具, 名称, 描述, 参数没有显式给出时从函数推导"""
+class Tool:
+    """工具, 名称, 描述, 参数省略时从函数推导"""
 
     def __init__(
         self,
@@ -55,6 +39,12 @@ class FunctionTool:
         self.args = derive_args(func, self.name) if parameters is None else parameters
 
     async def call(self, args: Struct) -> str:
+        """执行一次调用, 返回给模型看的结果, 失败时直接抛异常
+
+        参数
+        - args: 已经校验过的参数
+        """
+
         if self.spread:
             run = functools.partial(self.func, **{field: getattr(args, field) for field in self.args.__struct_fields__})
         else:
@@ -65,13 +55,13 @@ class FunctionTool:
 
 
 @overload
-def tool(func: FunctionType, /) -> FunctionTool: ...
+def tool(func: FunctionType, /) -> Tool: ...
 
 
 @overload
 def tool(
     *, name: str | None = None, description: str | None = None, parameters: type[Struct] | None = None
-) -> Callable[[FunctionType], FunctionTool]: ...
+) -> Callable[[FunctionType], Tool]: ...
 
 
 def tool(
@@ -81,7 +71,7 @@ def tool(
     name: str | None = None,
     description: str | None = None,
     parameters: type[Struct] | None = None,
-) -> FunctionTool | Callable[[FunctionType], FunctionTool]:
+) -> Tool | Callable[[FunctionType], Tool]:
     """定义工具
 
     参数
@@ -91,7 +81,7 @@ def tool(
     - parameters: 参数 Struct, 省略时从类型注解推导, 给出时函数接收这个 Struct 的实例
     """
 
-    def wrap(func: FunctionType) -> FunctionTool:
-        return FunctionTool(func, name, description, parameters)
+    def wrap(func: FunctionType) -> Tool:
+        return Tool(func, name, description, parameters)
 
     return wrap(func) if func is not None else wrap

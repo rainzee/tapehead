@@ -65,7 +65,7 @@ class OpenAIModel:
         self.extra_body = extra_body or {}
         self.timeout = timeout
 
-    async def stream(self, messages: list[Message], tools: Sequence[Tool[Any]]) -> AsyncIterator[AnyDelta | Usage]:
+    async def stream(self, messages: list[Message], tools: Sequence[Tool]) -> AsyncIterator[AnyDelta | Usage]:
         if tools:
             raise NotImplementedError("工具调用")
         body = {

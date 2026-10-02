@@ -2,7 +2,7 @@ import json
 import time
 from collections.abc import AsyncIterator, Sequence
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated
 
 import pytest
 from msgspec import Meta
@@ -27,7 +27,7 @@ async def read_file(path: Annotated[str, Meta(description="文件路径")]) -> s
 class ReadsThenAnswers:
     """被要求读文件时先请求工具, 拿到工具结果后复述"""
 
-    async def stream(self, messages: list[Message], tools: Sequence[Tool[Any]]) -> AsyncIterator[AnyDelta]:
+    async def stream(self, messages: list[Message], tools: Sequence[Tool]) -> AsyncIterator[AnyDelta]:
         last = messages[-1]
         if last.role == "tool":
             yield TextDelta(text=f"工具返回: {last.content}")
