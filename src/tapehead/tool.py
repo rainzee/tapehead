@@ -3,14 +3,13 @@ import functools
 import inspect
 import typing
 from collections.abc import Callable
-from types import FunctionType
 from typing import Any, overload
 
 from msgspec import Struct, defstruct
 from msgspec.json import encode
 
 
-def derive_args(func: FunctionType, name: str) -> type[Struct]:
+def derive_args(func: Callable, name: str) -> type[Struct]:
     """从函数签名生成参数 Struct 类型注解里的 Annotated 元数据原样保留"""
 
     hints = typing.get_type_hints(func, include_extras=True)
@@ -28,7 +27,7 @@ class Tool:
 
     def __init__(
         self,
-        func: FunctionType,
+        func: Callable,
         name: str | None = None,
         description: str | None = None,
         parameters: type[Struct] | None = None,
@@ -56,23 +55,23 @@ class Tool:
 
 
 @overload
-def tool(func: FunctionType, /) -> Tool: ...
+def tool(func: Callable, /) -> Tool: ...
 
 
 @overload
 def tool(
     *, name: str | None = None, description: str | None = None, parameters: type[Struct] | None = None
-) -> Callable[[FunctionType], Tool]: ...
+) -> Callable[[Callable], Tool]: ...
 
 
 def tool(
-    func: FunctionType | None = None,
+    func: Callable | None = None,
     /,
     *,
     name: str | None = None,
     description: str | None = None,
     parameters: type[Struct] | None = None,
-) -> Tool | Callable[[FunctionType], Tool]:
+) -> Tool | Callable[[Callable], Tool]:
     """定义工具
 
     参数
@@ -82,7 +81,7 @@ def tool(
     - parameters: 参数 Struct, 省略时从类型注解推导, 给出时函数接收这个 Struct 的实例
     """
 
-    def wrap(func: FunctionType) -> Tool:
+    def wrap(func: Callable) -> Tool:
         return Tool(func, name, description, parameters)
 
     return wrap(func) if func is not None else wrap
