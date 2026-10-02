@@ -6,7 +6,7 @@ from tapehead.tapes.header import TapeHeader
 from tapehead.tapes.tape import Access
 
 
-class MemoryTape:
+class MemTape:
     """存在内存里的磁带, 只有写句柄, 不处理翻录"""
 
     def __init__(self, header: TapeHeader) -> None:
@@ -36,3 +36,28 @@ class MemoryTape:
 
     async def close(self) -> None:
         pass
+
+
+class MemDeck:
+    """存在内存里的磁带机, 进程结束即消失"""
+
+    def __init__(self) -> None:
+        self.tapes: dict[str, MemTape] = {}
+
+    async def create(self, header: TapeHeader) -> MemTape:
+        if header.origin is not None:
+            raise NotImplementedError("翻录")
+        if header.name in self.tapes:
+            raise FileExistsError(header.name)
+        self.tapes[header.name] = MemTape(header)
+
+        return self.tapes[header.name]
+
+    async def open(self, name: str, access: Access) -> MemTape:
+        if access != "write":
+            raise NotImplementedError("读句柄")
+
+        return self.tapes[name]
+
+    async def list(self) -> list[TapeHeader]:
+        return [tape.header for tape in self.tapes.values()]

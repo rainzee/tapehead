@@ -5,9 +5,9 @@ import pytest
 
 from tapehead.delta import AnyDelta, TextDelta
 from tapehead.head import Head
+from tapehead.media.mem import MemTape
 from tapehead.message import Message
 from tapehead.tapes.header import TapeHeader
-from tapehead.tapes.memory import MemoryTape
 from tapehead.tapes.play import play
 
 
@@ -28,7 +28,7 @@ class ForgetfulModel:
 async def test_second_turn_remembers_the_first() -> None:
     """用户先自我介绍, 再追问, 模型只能从磁带回放的上下文里知道名字"""
 
-    tape = MemoryTape(TapeHeader(name="chat", created_at=time.time()))
+    tape = MemTape(TapeHeader(name="chat", created_at=time.time()))
     head = Head(ForgetfulModel())
 
     async for _ in await head.run(tape, "我叫小明"):

@@ -4,13 +4,13 @@ from pathlib import Path
 import msgspec
 
 from tapehead.event import AnyEvent
+from tapehead.media.mem import MemTape
 from tapehead.tapes.frame import Frame
 from tapehead.tapes.header import TapeHeader
-from tapehead.tapes.memory import MemoryTape
 from tapehead.tapes.tape import Access
 
 
-class FileTape(MemoryTape):
+class FsTape(MemTape):
     """落在 JSONL 文件里的磁带, 打开时整盘读进内存, 录制时追加写文件"""
 
     def __init__(self, header: TapeHeader, frames_path: Path) -> None:
@@ -35,28 +35,28 @@ class FileTape(MemoryTape):
         self.file.close()
 
 
-class FileDeck:
+class FsDeck:
     """把磁带存在一个目录里, 每盘带两个文件, 头和帧"""
 
     def __init__(self, directory: Path) -> None:
         self.directory = directory
         directory.mkdir(parents=True, exist_ok=True)
 
-    async def create(self, header: TapeHeader) -> FileTape:
+    async def create(self, header: TapeHeader) -> FsTape:
         if header.origin is not None:
             raise NotImplementedError("翻录")
         frames_path = self.directory / f"{header.name}.jsonl"
         frames_path.touch(exist_ok=False)
         (self.directory / f"{header.name}.header.json").write_bytes(msgspec.json.encode(header))
 
-        return FileTape(header, frames_path)
+        return FsTape(header, frames_path)
 
-    async def open(self, name: str, access: Access) -> FileTape:
+    async def open(self, name: str, access: Access) -> FsTape:
         if access != "write":
             raise NotImplementedError("读句柄")
         header = msgspec.json.decode((self.directory / f"{name}.header.json").read_bytes(), type=TapeHeader)
 
-        return FileTape(header, self.directory / f"{name}.jsonl")
+        return FsTape(header, self.directory / f"{name}.jsonl")
 
     async def list(self) -> list[TapeHeader]:
         paths = sorted(self.directory.glob("*.header.json"))
