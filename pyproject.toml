@@ -11,6 +11,12 @@ dependencies = [
     "msgspec>=0.21.1",
 ]
 
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+]
+
 [project.urls]
 Repository = "https://github.com/rainzee/tapehead"
 
@@ -21,9 +27,3 @@ build-backend = "uv_build"
 [tool.ruff]
 line-length = 128
 target-version = "py313"
-
-[dependency-groups]
-dev = [
-    "pytest>=9.1.1",
-    "pytest-asyncio>=1.4.0",
-]

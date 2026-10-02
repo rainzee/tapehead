@@ -8,7 +8,7 @@ type Access = Literal["read", "write"]
 
 
 class Tape(Protocol):
-    """一盘磁带的句柄, 帧序号从 0 连续, 已录的帧永不改写, 同一时刻只有一个写句柄"""
+    """磁带"""
 
     @property
     def header(self) -> TapeHeader: ...
