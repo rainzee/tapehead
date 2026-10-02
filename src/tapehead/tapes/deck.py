@@ -5,7 +5,7 @@ from tapehead.tapes.tape import Access, Tape
 
 
 class Deck(Protocol):
-    """磁带机, 负责磁带的存放和出入库, 帧的读写只经由 Tape 句柄"""
+    """磁带机, 负责磁带的存放和出入库"""
 
     async def create(self, header: TapeHeader) -> Tape:
         """新建一盘带并取得写句柄, header.origin 非空即为翻录
@@ -25,5 +25,5 @@ class Deck(Protocol):
         ...
 
     async def list(self) -> list[TapeHeader]:
-        """列出所有磁带头, 不读帧"""
+        """列出所有磁带头"""
         ...
