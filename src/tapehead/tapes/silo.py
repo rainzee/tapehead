@@ -4,8 +4,8 @@ from tapehead.tapes.header import TapeHeader
 from tapehead.tapes.tape import Access, Tape
 
 
-class Deck(Protocol):
-    """磁带机, 负责磁带的存放和出入库"""
+class Silo(Protocol):
+    """磁带库, 负责磁带的存放和出入库"""
 
     async def create(self, header: TapeHeader) -> Tape:
         """新建一盘带并取得写句柄, header.origin 非空即为翻录

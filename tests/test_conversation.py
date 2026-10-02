@@ -7,7 +7,7 @@ import pytest
 
 from tapehead.delta import AnyDelta, TextDelta
 from tapehead.head import Head
-from tapehead.media.fs import FsDeck
+from tapehead.media.fs import FsSilo
 from tapehead.media.mem import MemTape
 from tapehead.message import Message
 from tapehead.tapes.header import TapeHeader
@@ -52,18 +52,18 @@ async def test_second_turn_remembers_the_first() -> None:
 async def test_conversation_survives_a_restart(tmp_path: Path) -> None:
     """用户自我介绍后关掉程序, 第二天重新打开同一盘带接着问, 模型仍然知道名字"""
 
-    deck = FsDeck(tmp_path)
-    tape = await deck.create(TapeHeader(name="chat", created_at=time.time()))
+    silo = FsSilo(tmp_path)
+    tape = await silo.create(TapeHeader(name="chat", created_at=time.time()))
     async for _ in await Head(ForgetfulModel()).run(tape, "我叫小明"):
         pass
     await tape.close()
 
-    tape = await FsDeck(tmp_path).open("chat", "write")
+    tape = await FsSilo(tmp_path).open("chat", "write")
     async for _ in await Head(ForgetfulModel()).run(tape, "我叫什么"):
         pass
     await tape.close()
 
-    tape = await FsDeck(tmp_path).open("chat", "write")
+    tape = await FsSilo(tmp_path).open("chat", "write")
     assert [(m.role, m.content) for m in play(await tape.read())] == [
         ("user", "我叫小明"),
         ("assistant", "你好"),

@@ -35,7 +35,7 @@ class FsTape(MemTape):
         self.file.close()
 
 
-class FsDeck:
+class FsSilo:
     """把磁带存在一个目录里, 每盘带两个文件, 头和帧"""
 
     def __init__(self, directory: Path) -> None:

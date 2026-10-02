@@ -38,8 +38,8 @@ class MemTape:
         pass
 
 
-class MemDeck:
-    """内存磁带机"""
+class MemSilo:
+    """内存磁带库"""
 
     def __init__(self) -> None:
         self.tapes: dict[str, MemTape] = {}
