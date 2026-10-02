@@ -82,7 +82,7 @@ def tool(
     description: str | None = None,
     parameters: type[Struct] | None = None,
 ) -> FunctionTool | Callable[[FunctionType], FunctionTool]:
-    """把函数包装成工具, 可以直接 @tool, 也可以 @tool(...) 覆盖其中任意一项
+    """定义工具
 
     参数
     - func: 被包装的函数, 同步函数会放到线程里执行, 返回值不是 str 时编码成 JSON 文本
