@@ -7,7 +7,7 @@ from tapehead.tapes.tape import Access
 
 
 class MemTape:
-    """存在内存里的磁带, 只有写句柄, 不处理翻录"""
+    """内存磁带"""
 
     def __init__(self, header: TapeHeader) -> None:
         self.header = header
@@ -39,7 +39,7 @@ class MemTape:
 
 
 class MemDeck:
-    """存在内存里的磁带机, 进程结束即消失"""
+    """内存磁带机"""
 
     def __init__(self) -> None:
         self.tapes: dict[str, MemTape] = {}
