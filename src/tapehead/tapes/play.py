@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 
-from tapehead.event import Anchor, AnyEvent, AssistantMessage, UserMessage
+from tapehead.event import Anchor, AnyEvent, AssistantMessage, ToolResult, UserMessage
 from tapehead.message import Message
 from tapehead.tapes.frame import Frame
 
@@ -29,7 +29,7 @@ def play(frames: Sequence[Frame]) -> list[Message]:
     messages: list[Message] = []
     for frame in frames[cue(frames) :]:
         match frame.event:
-            case UserMessage(message=message) | AssistantMessage(message=message):
+            case UserMessage(message=message) | AssistantMessage(message=message) | ToolResult(message=message):
                 messages.append(message)
 
     return messages

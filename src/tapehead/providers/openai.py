@@ -1,4 +1,4 @@
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Sequence
 from typing import Any
 
 import httpx
@@ -7,6 +7,7 @@ import msgspec
 from tapehead.delta import AnyDelta, ReasoningDelta, TextDelta
 from tapehead.event import Usage
 from tapehead.message import Message
+from tapehead.tool import Tool
 
 
 class PromptDetails(msgspec.Struct):
@@ -64,7 +65,9 @@ class OpenAIModel:
         self.extra_body = extra_body or {}
         self.timeout = timeout
 
-    async def stream(self, messages: list[Message]) -> AsyncIterator[AnyDelta | Usage]:
+    async def stream(self, messages: list[Message], tools: Sequence[Tool[Any]]) -> AsyncIterator[AnyDelta | Usage]:
+        if tools:
+            raise NotImplementedError("工具调用")
         body = {
             "model": self.model,
             "messages": [self.encode_message(message) for message in messages],

@@ -1,6 +1,7 @@
 import time
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Sequence
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -11,12 +12,13 @@ from tapehead.media.mem import MemTape
 from tapehead.message import Message
 from tapehead.tapes.header import TapeHeader
 from tapehead.tapes.play import play
+from tapehead.tool import Tool
 
 
 class ForgetfulModel:
     """只靠收到的上下文回答, 被问到名字时, 之前没人说过就答不上来"""
 
-    async def stream(self, messages: list[Message]) -> AsyncIterator[AnyDelta]:
+    async def stream(self, messages: list[Message], tools: Sequence[Tool[Any]]) -> AsyncIterator[AnyDelta]:
         *earlier, asked = messages
         if "我叫什么" not in asked.content:
             yield TextDelta(text="你好")
