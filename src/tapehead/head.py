@@ -32,6 +32,7 @@ def settle(deltas: Sequence[AnyDelta]) -> tuple[str, list[ToolUse]]:
 
     text = "".join(delta.text for delta in deltas if isinstance(delta, TextDelta))
     uses: dict[str, ToolUse] = {}
+
     for delta in deltas:
         if isinstance(delta, ToolUseDelta):
             use = uses.setdefault(delta.call_id, ToolUse(call_id=delta.call_id, name="", arguments=""))
@@ -68,6 +69,7 @@ class Head:
         tool = next((tool for tool in self.tools if tool.name == use.name), None)
         if tool is None:
             return f"未知工具: {use.name}", True
+
         try:
             return await tool.call(msgspec.json.decode(use.arguments, type=tool.args)), False
         except Exception as error:  # noqa: BLE001 工具的任何失败都交还给模型
@@ -82,19 +84,23 @@ class Head:
         while True:
             for frame in await tape.record(StepStart(turn=turn, step=step)):
                 yield frame
+
             deltas: list[AnyDelta] = []
             usage = None
+
             async for item in self.model.stream(play(await tape.read()), self.tools):
                 if isinstance(item, Usage):
                     usage = item
                     continue
                 deltas.append(item)
                 yield item
+
             text, uses = settle(deltas)
 
             message = Message(role="assistant", content=text, tool_uses=uses)
             for frame in await tape.record(AssistantMessage(turn=turn, step=step, message=message, stream=deltas, usage=usage)):
                 yield frame
+
             for use in uses:
                 for frame in await tape.record(
                     ToolCall(turn=turn, step=step, call_id=use.call_id, name=use.name, arguments=use.arguments)
@@ -102,11 +108,13 @@ class Head:
                     yield frame
                 content, is_error = await self.execute(use)
                 result = Message(role="tool", content=content, tool_call_id=use.call_id)
+
                 for frame in await tape.record(ToolResult(turn=turn, step=step, message=result, is_error=is_error)):
                     yield frame
 
             for frame in await tape.record(StepEnd(turn=turn, step=step)):
                 yield frame
+
             if not uses:
                 break
             step += 1
