@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 
-from tapehead.event import AnyEvent
+from tapehead.event import Anchor, AnyEvent, AssistantMessage, UserMessage
 from tapehead.message import Message
 from tapehead.tapes.frame import Frame
 
@@ -12,7 +12,11 @@ def cue(frames: Sequence[Frame]) -> int:
     - frames: 按序号排列的帧
     """
 
-    raise NotImplementedError
+    for i in range(len(frames) - 1, -1, -1):
+        if isinstance(frames[i].event, Anchor):
+            return i
+
+    return 0
 
 
 def play(frames: Sequence[Frame]) -> list[Message]:
@@ -22,7 +26,13 @@ def play(frames: Sequence[Frame]) -> list[Message]:
     - frames: 按序号排列的帧
     """
 
-    raise NotImplementedError
+    messages: list[Message] = []
+    for frame in frames[cue(frames) :]:
+        match frame.event:
+            case UserMessage(message=message) | AssistantMessage(message=message):
+                messages.append(message)
+
+    return messages
 
 
 def mend(frames: Sequence[Frame]) -> list[AnyEvent]:
