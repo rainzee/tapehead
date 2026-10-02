@@ -11,10 +11,11 @@ from msgspec.json import encode
 
 
 def derive_args(func: FunctionType, name: str) -> type[Struct]:
-    """从函数签名生成参数 Struct, 类型注解里的 Annotated 元数据原样保留"""
+    """从函数签名生成参数 Struct 类型注解里的 Annotated 元数据原样保留"""
 
     hints = typing.get_type_hints(func, include_extras=True)
     fields = []
+
     for param in inspect.signature(func).parameters.values():
         annotation = hints.get(param.name, Any)
         fields.append((param.name, annotation) if param.default is param.empty else (param.name, annotation, param.default))
@@ -23,7 +24,7 @@ def derive_args(func: FunctionType, name: str) -> type[Struct]:
 
 
 class Tool:
-    """工具, 名称, 描述, 参数省略时从函数推导"""
+    """工具对象"""
 
     def __init__(
         self,
