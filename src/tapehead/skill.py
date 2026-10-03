@@ -1,4 +1,3 @@
-import re
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -7,8 +6,6 @@ from msgspec.yaml import decode
 
 from tapehead.tool import Tool, tool
 
-NAME_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
-
 
 class Skill(Struct):
     """技能"""
@@ -16,7 +13,7 @@ class Skill(Struct):
     name: str
     description: str
     body: str
-    directory: str | None = None
+    directory: str
 
 
 class Frontmatter(Struct):
@@ -33,8 +30,8 @@ def parse_skill(file: Path) -> Skill:
     - file: SKILL.md 的路径, 它所在目录的名字必须等于技能名
     """
 
-    parts = file.read_text(encoding="utf-8").removeprefix("\ufeff").split("---", 2)
-    if len(parts) < 3 or parts[0].strip():
+    parts = file.read_text(encoding="utf-8").split("---", 2)
+    if len(parts) < 3:
         raise ValueError(f"{file}: 缺少 frontmatter")
 
     try:
@@ -42,14 +39,8 @@ def parse_skill(file: Path) -> Skill:
     except (DecodeError, ValidationError) as error:
         raise ValueError(f"{file}: {error}") from error
 
-    if len(meta.name) > 64 or not NAME_PATTERN.fullmatch(meta.name):
-        raise ValueError(f"{file}: 技能名必须是不超过 64 个字符的 kebab-case, 实际是 {meta.name!r}")
-
     if meta.name != file.parent.name:
         raise ValueError(f"{file}: 技能名 {meta.name!r} 与目录名 {file.parent.name!r} 不一致")
-
-    if not meta.description.strip() or len(meta.description) > 1024:
-        raise ValueError(f"{file}: 描述不能为空, 也不能超过 1024 个字符")
 
     return Skill(
         name=meta.name,
@@ -113,6 +104,6 @@ def skill_tool(skills: Sequence[Skill]) -> Tool:
         found = by_name.get(name)
         if found is None:
             raise ValueError(f"未知技能: {name}, 可用: {', '.join(by_name)}")
-        return f"技能目录: {found.directory}\n\n{found.body}" if found.directory else found.body
+        return f"技能目录: {found.directory}\n\n{found.body}"
 
     return skill
