@@ -33,7 +33,7 @@ class Tool:
         parameters: type[Struct] | None = None,
     ) -> None:
         self.func = func
-        self.name = name or func.__name__
+        self.name = name or func.__name__  # ty: ignore[unresolved-attribute]
         self.description = description if description is not None else (inspect.getdoc(func) or "")
         self.spread = parameters is None
         self.args = derive_args(func, self.name) if parameters is None else parameters
