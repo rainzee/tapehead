@@ -1,3 +1,4 @@
+import asyncio
 import json
 import time
 from collections.abc import AsyncIterator, Sequence
@@ -8,7 +9,7 @@ import pytest
 from msgspec import Meta
 
 from tapehead.delta import AnyDelta, TextDelta, ToolUseDelta
-from tapehead.event import ToolResult, TurnEnd
+from tapehead.event import StepStart, ToolResult, TurnEnd
 from tapehead.head import Head
 from tapehead.media.mem import MemTape
 from tapehead.message import Message
@@ -71,3 +72,34 @@ async def test_a_failing_tool_is_reported_to_the_model(tmp_path: Path) -> None:
     assert "FileNotFoundError" in results[0].message.content
     assert isinstance(events[-1], TurnEnd) and events[-1].reason == "completed"
     assert play(await tape.read())[-1].content.startswith("工具返回: FileNotFoundError")
+
+
+class NeverSatisfied:
+    """每一步都再请求一次工具, 永远不给出最终回答"""
+
+    async def stream(self, messages: list[Message], tools: Sequence[Tool]) -> AsyncIterator[AnyDelta]:
+        yield ToolUseDelta(call_id="call-1", name="ping", arguments="{}")
+
+
+@tool
+def ping() -> str:
+    """探活"""
+
+    return "pong"
+
+
+@pytest.mark.asyncio
+async def test_a_model_stuck_on_tools_is_stopped() -> None:
+    """模型卡在反复请求工具上, 这一轮在步数上限处收尾, 磁带上不留下没闭合的轮次"""
+
+    tape = MemTape(TapeHeader(name="chat", created_at=time.time()))
+
+    async def drain() -> None:
+        async for _ in await Head(NeverSatisfied(), [ping], max_steps=3).run(tape, "ping 到天荒地老"):
+            pass
+
+    await asyncio.wait_for(drain(), timeout=5)
+
+    events = [frame.event for frame in await tape.read()]
+    assert sum(isinstance(event, StepStart) for event in events) == 3
+    assert isinstance(events[-1], TurnEnd) and events[-1].reason == "max_steps"

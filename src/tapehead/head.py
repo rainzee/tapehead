@@ -10,6 +10,7 @@ from tapehead.event import (
     ToolCall,
     ToolResult,
     TurnEnd,
+    TurnEndReason,
     TurnStart,
     Usage,
     UserMessage,
@@ -44,9 +45,17 @@ def settle(deltas: Sequence[AnyDelta]) -> tuple[str, list[ToolUse]]:
 class Head:
     """磁头, 回放磁带得出上下文, 驱动模型并把结果录回磁带"""
 
-    def __init__(self, model: Model, tools: Sequence[Tool] = ()) -> None:
+    def __init__(self, model: Model, tools: Sequence[Tool] = (), max_steps: int = 50) -> None:
+        """
+        参数
+        - model: 模型调用
+        - tools: 可用的工具
+        - max_steps: 一轮最多跑几个 step, 用完仍在请求工具时以 max_steps 收尾
+        """
+
         self.model = model
         self.tools = list(tools)
+        self.max_steps = max_steps
 
     async def run(self, tape: Tape, prompt: str) -> AsyncStreamEvents:
         """在磁带上跑一轮对话
@@ -79,8 +88,8 @@ class Head:
         for frame in await tape.record(TurnStart(turn=turn), UserMessage(message=Message(role="user", content=prompt))):
             yield frame
 
-        step = 0
-        while True:
+        reason: TurnEndReason = "max_steps"
+        for step in range(self.max_steps):
             for frame in await tape.record(StepStart(turn=turn, step=step)):
                 yield frame
 
@@ -115,8 +124,8 @@ class Head:
                 yield frame
 
             if not uses:
+                reason = "completed"
                 break
-            step += 1
 
-        for frame in await tape.record(TurnEnd(turn=turn, reason="completed")):
+        for frame in await tape.record(TurnEnd(turn=turn, reason=reason)):
             yield frame

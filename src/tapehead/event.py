@@ -16,7 +16,7 @@ class TurnStart(Event):
     turn: int
 
 
-type TurnEndReason = Literal["completed", "cancelled", "failed", "interrupted"]
+type TurnEndReason = Literal["completed", "cancelled", "failed", "interrupted", "max_steps"]
 
 
 class TurnEnd(Event):
