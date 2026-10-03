@@ -1,6 +1,16 @@
 from collections.abc import Sequence
 
-from tapehead.event import Anchor, AnyEvent, AssistantMessage, ToolResult, UserMessage
+from tapehead.event import (
+    Anchor,
+    AnyEvent,
+    AssistantMessage,
+    StepEnd,
+    StepStart,
+    ToolResult,
+    TurnEnd,
+    TurnStart,
+    UserMessage,
+)
 from tapehead.message import Message
 from tapehead.tapes.frame import Frame
 
@@ -44,4 +54,34 @@ def mend(frames: Sequence[Frame]) -> list[AnyEvent]:
     - frames: 按序号排列的帧
     """
 
-    raise NotImplementedError
+    for start in range(len(frames) - 1, -1, -1):
+        opened = frames[start].event
+        if isinstance(opened, TurnStart):
+            break
+    else:
+        return []
+
+    tail = [frame.event for frame in frames[start:]]
+    if any(isinstance(event, TurnEnd) for event in tail):
+        return []
+
+    turn = opened.turn
+    answered = {event.message.tool_call_id for event in tail if isinstance(event, ToolResult)}
+    open_step: int | None = None
+    fixes: list[AnyEvent] = []
+    for event in tail:
+        match event:
+            case StepStart(step=step):
+                open_step = step
+            case StepEnd():
+                open_step = None
+            case AssistantMessage(step=step, message=message):
+                for use in message.tool_uses:
+                    if use.call_id not in answered:
+                        result = Message(role="tool", content="工具执行被中断, 没有结果", tool_call_id=use.call_id)
+                        fixes.append(ToolResult(turn=turn, step=step, message=result, is_error=True))
+    if open_step is not None:
+        fixes.append(StepEnd(turn=turn, step=open_step))
+    fixes.append(TurnEnd(turn=turn, reason="interrupted"))
+
+    return fixes

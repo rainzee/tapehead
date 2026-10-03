@@ -18,7 +18,7 @@ from tapehead.event import (
 from tapehead.message import Message, ToolUse
 from tapehead.model import Model
 from tapehead.stream import AsyncStreamEvents, StreamItem
-from tapehead.tapes.play import play
+from tapehead.tapes.play import mend, play
 from tapehead.tapes.tape import Tape
 from tapehead.tool import Tool
 
@@ -50,7 +50,7 @@ class Head:
         参数
         - model: 模型调用
         - tools: 可用的工具
-        - max_steps: 一轮最多跑几个 step, 用完仍在请求工具时以 max_steps 收尾
+        - max_steps: 单 turn 最大 setps
         """
 
         self.model = model
@@ -84,7 +84,10 @@ class Head:
             return f"{type(error).__name__}: {error}", True
 
     async def drive(self, tape: Tape, prompt: str) -> AsyncIterator[StreamItem]:
-        turn = sum(isinstance(frame.event, TurnStart) for frame in await tape.read())
+        frames = await tape.read()
+        for frame in await tape.record(*mend(frames)):
+            yield frame
+        turn = sum(isinstance(frame.event, TurnStart) for frame in frames)
         for frame in await tape.record(TurnStart(turn=turn), UserMessage(message=Message(role="user", content=prompt))):
             yield frame
 
