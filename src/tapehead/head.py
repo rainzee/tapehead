@@ -17,7 +17,7 @@ from tapehead.event import (
 )
 from tapehead.message import Message, ToolUse
 from tapehead.model import Model
-from tapehead.skill import Skill, skill_tool, skills_prompt
+from tapehead.skill import Skill, render_skills, skill_tool
 from tapehead.stream import AsyncStreamEvents, StreamItem
 from tapehead.tapes.play import mend, play
 from tapehead.tapes.tape import Tape
@@ -64,7 +64,7 @@ class Head:
         """
 
         self.model = model
-        self.system_prompt = "\n\n".join(part for part in (system_prompt, skills_prompt(skills)) if part)
+        self.system_prompt = "\n\n".join(part for part in (system_prompt, render_skills(skills)) if part)
         self.tools = [*tools, *([skill_tool(skills)] if skills else [])]
         self.max_steps = max_steps
 
