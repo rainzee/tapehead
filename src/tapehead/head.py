@@ -17,6 +17,7 @@ from tapehead.event import (
 )
 from tapehead.message import Message, ToolUse
 from tapehead.model import Model
+from tapehead.skill import Skill, skill_tool, skills_prompt
 from tapehead.stream import AsyncStreamEvents, StreamItem
 from tapehead.tapes.play import mend, play
 from tapehead.tapes.tape import Tape
@@ -45,16 +46,26 @@ def settle(deltas: Sequence[AnyDelta]) -> tuple[str, list[ToolUse]]:
 class Head:
     """磁头, 回放磁带得出上下文, 驱动模型并把结果录回磁带"""
 
-    def __init__(self, model: Model, tools: Sequence[Tool] = (), max_steps: int = 50) -> None:
+    def __init__(
+        self,
+        model: Model,
+        tools: Sequence[Tool] = (),
+        system_prompt: str = "",
+        skills: Sequence[Skill] = (),
+        max_steps: int = 50,
+    ) -> None:
         """
         参数
         - model: 模型调用
         - tools: 可用的工具
+        - system_prompt: 系统提示, 不上带, 每次调用模型时放在上下文最前面
+        - skills: 可用的技能, 目录并入系统提示, 同时多出一个加载正文的 skill 工具
         - max_steps: 单 turn 最大 setps
         """
 
         self.model = model
-        self.tools = list(tools)
+        self.system_prompt = "\n\n".join(part for part in (system_prompt, skills_prompt(skills)) if part)
+        self.tools = [*tools, *([skill_tool(skills)] if skills else [])]
         self.max_steps = max_steps
 
     async def run(self, tape: Tape, prompt: str) -> AsyncStreamEvents:
@@ -99,7 +110,11 @@ class Head:
             deltas: list[AnyDelta] = []
             usage = None
 
-            async for item in self.model.stream(play(await tape.read()), self.tools):
+            context = play(await tape.read())
+            if self.system_prompt:
+                context = [Message(role="system", content=self.system_prompt), *context]
+
+            async for item in self.model.stream(context, self.tools):
                 if isinstance(item, Usage):
                     usage = item
                     continue
