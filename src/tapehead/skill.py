@@ -36,14 +36,18 @@ def parse_skill(file: Path) -> Skill:
     parts = file.read_text(encoding="utf-8").removeprefix("\ufeff").split("---", 2)
     if len(parts) < 3 or parts[0].strip():
         raise ValueError(f"{file}: 缺少 frontmatter")
+
     try:
         meta = decode(parts[1], type=Frontmatter)
     except (DecodeError, ValidationError) as error:
         raise ValueError(f"{file}: {error}") from error
+
     if len(meta.name) > 64 or not NAME_PATTERN.fullmatch(meta.name):
         raise ValueError(f"{file}: 技能名必须是不超过 64 个字符的 kebab-case, 实际是 {meta.name!r}")
+
     if meta.name != file.parent.name:
         raise ValueError(f"{file}: 技能名 {meta.name!r} 与目录名 {file.parent.name!r} 不一致")
+
     if not meta.description.strip() or len(meta.description) > 1024:
         raise ValueError(f"{file}: 描述不能为空, 也不能超过 1024 个字符")
 
@@ -66,14 +70,16 @@ def load_skills(*roots: Path) -> list[Skill]:
     for root in roots:
         for file in sorted(root.glob("*/SKILL.md")):
             skill = parse_skill(file)
+
             if skill.name in skills:
                 raise ValueError(f"技能重名: {skill.name}")
+
             skills[skill.name] = skill
 
     return list(skills.values())
 
 
-def skills_prompt(skills: Sequence[Skill]) -> str:
+def render_skills(skills: Sequence[Skill]) -> str:
     """把技能目录渲染成一段系统提示, 没有技能时为空
 
     参数
@@ -82,6 +88,7 @@ def skills_prompt(skills: Sequence[Skill]) -> str:
 
     if not skills:
         return ""
+
     lines = [
         "以下技能提供特定任务的专门指令, 任务匹配某个技能的描述时, 先调用 skill 工具加载它的完整指令",
         "<available_skills>",
@@ -106,7 +113,6 @@ def skill_tool(skills: Sequence[Skill]) -> Tool:
         found = by_name.get(name)
         if found is None:
             raise ValueError(f"未知技能: {name}, 可用: {', '.join(by_name)}")
-
         return f"技能目录: {found.directory}\n\n{found.body}" if found.directory else found.body
 
     return skill
