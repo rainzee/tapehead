@@ -24,7 +24,7 @@ class Frontmatter(Struct):
 
 
 def parse_skill(file: Path) -> Skill:
-    """解析一个 SKILL.md, 不合法时抛 ValueError
+    """解析 SKILL.md
 
     参数
     - file: SKILL.md 的路径, 它所在目录的名字必须等于技能名
@@ -32,7 +32,7 @@ def parse_skill(file: Path) -> Skill:
 
     parts = file.read_text(encoding="utf-8").split("---", 2)
     if len(parts) < 3:
-        raise ValueError(f"{file}: 缺少 frontmatter")
+        raise ValueError(f"{file} 不是合法的技能文件: 缺少 frontmatter")
 
     try:
         meta = decode(parts[1], type=Frontmatter)
@@ -51,7 +51,7 @@ def parse_skill(file: Path) -> Skill:
 
 
 def load_skills(*roots: Path) -> list[Skill]:
-    """从目录里读取技能, 每个技能是 <root>/<name>/SKILL.md, 任何一个不合法或重名都直接抛 ValueError
+    """从目录里读取技能, 每个技能是 <root>/<name>/SKILL.md
 
     参数
     - roots: 技能目录, 按给定顺序读取
