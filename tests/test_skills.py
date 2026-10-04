@@ -56,11 +56,20 @@ async def test_agent_loads_a_skill_listed_in_the_system_prompt(tmp_path: Path) -
     assert messages[3].content == "按规范办: 发布前先跑冒烟测试, 发布后看五分钟错误率."
 
 
-def test_a_broken_skill_stops_startup(tmp_path: Path) -> None:
-    """技能目录里有一个名字和目录对不上的技能, 宿主启动时就直接报错, 而不是悄悄少一个技能"""
+@pytest.mark.parametrize(
+    ("directory", "name", "description", "message"),
+    [
+        ("deploy", "deploy-guide", "部署服务时使用", "与目录名"),
+        ("Deploy-Guide", "Deploy-Guide", "部署服务时使用", "kebab-case"),
+        ("deploy-guide", "deploy-guide", "''", "描述不能为空"),
+    ],
+)
+def test_a_broken_skill_stops_startup(tmp_path: Path, directory: str, name: str, description: str, message: str) -> None:
+    """技能目录里有一个写坏的技能, 宿主启动时就直接报错, 而不是悄悄少一个技能"""
 
-    (tmp_path / "deploy").mkdir()
-    (tmp_path / "deploy" / "SKILL.md").write_text(DEPLOY_SKILL, encoding="utf-8")
+    (tmp_path / directory).mkdir()
+    content = f"---\nname: {name}\ndescription: {description}\n---\n\n正文\n"
+    (tmp_path / directory / "SKILL.md").write_text(content, encoding="utf-8")
 
-    with pytest.raises(ValueError, match="与目录名"):
+    with pytest.raises(ValueError, match=message):
         load_skills(tmp_path)

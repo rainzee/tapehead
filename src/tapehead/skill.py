@@ -1,3 +1,4 @@
+import re
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -5,6 +6,8 @@ from msgspec import DecodeError, Struct, ValidationError
 from msgspec.yaml import decode
 
 from tapehead.tool import Tool, tool
+
+NAME_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
 
 class Skill(Struct):
@@ -39,8 +42,14 @@ def parse_skill(file: Path) -> Skill:
     except (DecodeError, ValidationError) as error:
         raise ValueError(f"{file}: {error}") from error
 
+    if not NAME_PATTERN.fullmatch(meta.name):
+        raise ValueError(f"{file}: 技能名必须是 kebab-case, 实际是 {meta.name!r}")
+
     if meta.name != file.parent.name:
         raise ValueError(f"{file}: 技能名 {meta.name!r} 与目录名 {file.parent.name!r} 不一致")
+
+    if not meta.description.strip():
+        raise ValueError(f"{file}: 描述不能为空")
 
     return Skill(
         name=meta.name,
