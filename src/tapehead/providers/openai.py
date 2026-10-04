@@ -46,7 +46,7 @@ class Chunk(Struct):
     usage: ChunkUsage | None = None
 
 
-class OpenAIModel:
+class OpenAIProvider:
     """OpenAI 兼容的 chat completions, 对接 vLLM 上的 Qwen 系列
 
     参数

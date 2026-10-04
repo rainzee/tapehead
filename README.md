@@ -52,9 +52,9 @@ agent 发生过的一切都录在磁带上, 其余的都从磁带里读出来. �
 
 负责磁带的存放和出入库, 每种介质有自己的磁带库: `MemSilo`, `FsSilo`, `DbSilo`. 帧的读写只经由 `Tape` 句柄, 不经由磁带库.
 
-## 模型 (Model)
+## 模型提供方 (Provider)
 
-内核只认一个 `Model` 协议, 由 host 传入, 不内置 provider, 也不读环境变量. 随库附带一个 OpenAI 兼容的实现, 对接 vLLM 上的 Qwen, 它的依赖放在可选 extra `tapehead[openai]` 里.
+内核只认一个 `Provider` 协议, 由 host 传入, 不内置 provider, 也不读环境变量. 随库附带一个 OpenAI 兼容的实现, 对接 vLLM 上的 Qwen, 它的依赖放在可选 extra `tapehead[openai]` 里.
 
 ## 工具 (Tool)
 

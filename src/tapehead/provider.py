@@ -7,8 +7,8 @@ from tapehead.message import Message
 from tapehead.tool import Tool
 
 
-class Model(Protocol):
-    """模型调用, 由宿主提供, 内核不内置任何 provider"""
+class Provider(Protocol):
+    """模型提供方, 由宿主提供, 内核不内置任何实现"""
 
     def stream(self, messages: list[Message], tools: Sequence[Tool]) -> AsyncIterator[AnyDelta | Usage]:
         """以流的形式返回一次模型调用的增量, 用量在结算时给出

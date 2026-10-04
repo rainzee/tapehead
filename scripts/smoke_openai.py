@@ -11,18 +11,18 @@ import time
 
 from tapehead.head import Head
 from tapehead.media.mem import MemTape
-from tapehead.providers.openai import OpenAIModel
+from tapehead.providers.openai import OpenAIProvider
 from tapehead.tapes.frame import Frame
 from tapehead.tapes.header import TapeHeader
 
 
 async def main() -> None:
     extra_body = {"chat_template_kwargs": {"enable_thinking": False}} if "--no-think" in sys.argv else None
-    model = OpenAIModel(
+    provider = OpenAIProvider(
         os.environ["TAPEHEAD_BASE_URL"], os.environ["TAPEHEAD_API_KEY"], os.environ["TAPEHEAD_MODEL"], extra_body
     )
     tape = MemTape(TapeHeader(name="smoke", created_at=time.time()))
-    async for item in await Head(model).run(tape, "9.11 和 9.9 哪个大? 一句话回答"):
+    async for item in await Head(provider).run(tape, "9.11 和 9.9 哪个大? 一句话回答"):
         if isinstance(item, Frame):
             print(f"\n[frame {item.seq}] {item.event}")
         else:

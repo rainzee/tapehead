@@ -16,7 +16,7 @@ from tapehead.event import (
     UserMessage,
 )
 from tapehead.message import Message, ToolUse
-from tapehead.model import Model
+from tapehead.provider import Provider
 from tapehead.skill import Skill, render_skills, skill_tool
 from tapehead.stream import AsyncStreamEvents, StreamItem
 from tapehead.tapes.play import mend, play
@@ -48,7 +48,7 @@ class Head:
 
     def __init__(
         self,
-        model: Model,
+        provider: Provider,
         tools: Sequence[Tool] = (),
         system_prompt: str = "",
         skills: Sequence[Skill] = (),
@@ -56,14 +56,14 @@ class Head:
     ) -> None:
         """
         参数
-        - model: 模型调用
+        - provider: 模型提供方
         - tools: 可用的工具
         - system_prompt: 系统提示, 不上带, 每次调用模型时放在上下文最前面
         - skills: 可用的技能, 目录并入系统提示, 同时多出一个加载正文的 skill 工具
         - max_steps: 单 turn 最大 setps
         """
 
-        self.model = model
+        self.provider = provider
         self.system_prompt = "\n\n".join(part for part in (system_prompt, render_skills(skills)) if part)
         self.tools = [*tools, *([skill_tool(skills)] if skills else [])]
         self.max_steps = max_steps
@@ -114,7 +114,7 @@ class Head:
             if self.system_prompt:
                 context = [Message(role="system", content=self.system_prompt), *context]
 
-            async for item in self.model.stream(context, self.tools):
+            async for item in self.provider.stream(context, self.tools):
                 if isinstance(item, Usage):
                     usage = item
                     continue

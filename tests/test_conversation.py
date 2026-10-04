@@ -14,7 +14,7 @@ from tapehead.tapes.play import play
 from tapehead.tool import Tool
 
 
-class ForgetfulModel:
+class ForgetfulProvider:
     """只靠收到的上下文回答, 被问到名字时, 之前没人说过就答不上来"""
 
     async def stream(self, messages: list[Message], tools: Sequence[Tool]) -> AsyncIterator[AnyDelta]:
@@ -32,7 +32,7 @@ async def test_second_turn_remembers_the_first() -> None:
     """用户先自我介绍, 再追问, 模型只能从磁带回放的上下文里知道名字"""
 
     tape = MemTape(TapeHeader(name="chat", created_at=time.time()))
-    head = Head(ForgetfulModel())
+    head = Head(ForgetfulProvider())
 
     async for _ in await head.run(tape, "我叫小明"):
         pass
@@ -53,12 +53,12 @@ async def test_conversation_survives_a_restart(tmp_path: Path) -> None:
 
     silo = FsSilo(tmp_path)
     tape = await silo.create(TapeHeader(name="chat", created_at=time.time()))
-    async for _ in await Head(ForgetfulModel()).run(tape, "我叫小明"):
+    async for _ in await Head(ForgetfulProvider()).run(tape, "我叫小明"):
         pass
     await tape.close()
 
     tape = await FsSilo(tmp_path).open("chat", "write")
-    async for _ in await Head(ForgetfulModel()).run(tape, "我叫什么"):
+    async for _ in await Head(ForgetfulProvider()).run(tape, "我叫什么"):
         pass
     await tape.close()
 
