@@ -22,9 +22,11 @@ async def main() -> None:
         os.environ["TAPEHEAD_BASE_URL"], os.environ["TAPEHEAD_API_KEY"], os.environ["TAPEHEAD_MODEL"], extra_body
     )
     tape = MemTape(TapeHeader(name="smoke", created_at=time.time()))
+    position = 0
     async for item in await Head(provider).run(tape, "9.11 和 9.9 哪个大? 一句话回答"):
         if isinstance(item, Frame):
-            print(f"\n[frame {item.seq}] {item.event}")
+            print(f"\n[frame {position}] {item.event}")
+            position += 1
         else:
             print(f"{type(item).__name__}({item.text!r})" if hasattr(item, "text") else item)
 

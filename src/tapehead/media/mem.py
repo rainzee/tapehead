@@ -23,7 +23,7 @@ class MemTape:
 
     async def record(self, *events: AnyEvent) -> list[Frame]:
         now = time.time()
-        recorded = [Frame(seq=self.head + i, time=now, event=event) for i, event in enumerate(events)]
+        recorded = [Frame(recorded_at=now, event=event) for event in events]
         self.frames.extend(recorded)
 
         return recorded
