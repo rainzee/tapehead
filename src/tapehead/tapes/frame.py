@@ -4,8 +4,7 @@ from tapehead.event import AnyEvent
 
 
 class Frame(Struct):
-    """磁带上的一帧, seq 和 time 只有 Tape.record 能填"""
+    """磁带上的一帧, recorded_at 由 Tape.record 填写, 位置由介质提供"""
 
-    seq: int
-    time: float
+    recorded_at: float
     event: AnyEvent
