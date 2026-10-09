@@ -87,15 +87,4 @@ class Anchored(Struct, tag="anchored"):
     state: dict[str, Any] = {}
 
 
-class Custom(Struct, tag="custom"):
-    """扩展事件的统一出口, 内核只认 name 和 ignorable
-
-    ignorable 为 False 时, 不认识 name 的读者必须拒绝回放
-    """
-
-    name: str
-    data: dict[str, Any] = {}
-    ignorable: bool = False
-
-
-type Event = Configured | Prompted | Generated | Aborted | Dispatched | Returned | Yielded | Anchored | Custom
+type Event = Configured | Prompted | Generated | Aborted | Dispatched | Returned | Yielded | Anchored

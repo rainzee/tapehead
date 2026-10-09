@@ -28,7 +28,7 @@ agent 发生过的一切都录在磁带上, 其余的都从磁带里读出来. �
 
 ## 事件 (Event)
 
-帧承载的事实, 用动词过去式命名, 每个事件都是某个参与者做出的, 推不出来的一件事: `Configured` (宿主), `Prompted` (用户), `Generated` / `Aborted` (模型), `Dispatched` (harness), `Returned` (工具), `Yielded` (agent 交还控制权), 以及 `Anchored` 和扩展出口 `Custom`. 能从其他事件推出来的不记录.
+帧承载的事实, 用动词过去式命名, 每个事件都是某个参与者做出的, 推不出来的一件事: `Configured` (宿主), `Prompted` (用户), `Generated` / `Aborted` (模型), `Dispatched` (harness), `Returned` (工具), `Yielded` (agent 交还控制权), 以及 `Anchored`. 能从其他事件推出来的不记录.
 
 事件带着模型看到的消息 (Message), 带消息的事件进入上下文, 不带的只记账. `Generated` 同时存消息和产生它的增量流, 二者不一致的事件构造不出来.
 
