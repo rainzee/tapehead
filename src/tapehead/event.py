@@ -40,14 +40,6 @@ class StepEnd(Event):
     step: int
 
 
-class Usage(Struct):
-    """一次模型调用的 token 用量"""
-
-    input_tokens: int
-    output_tokens: int
-    cached_tokens: int = 0
-
-
 class SystemMessage(Event):
     """系统提示"""
 
@@ -69,7 +61,6 @@ class AssistantMessage(Event):
     step: int
     message: Message
     stream: list[AnyDelta] = []
-    usage: Usage | None = None
     interrupted: bool = False
 
 

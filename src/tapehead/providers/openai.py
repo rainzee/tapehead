@@ -5,8 +5,7 @@ import httpx
 from msgspec import Struct
 from msgspec.json import Decoder
 
-from tapehead.delta import AnyDelta, ReasoningDelta, TextDelta
-from tapehead.event import Usage
+from tapehead.delta import AnyDelta, ReasoningDelta, TextDelta, UsageDelta
 from tapehead.message import AssistantMessage, Message, SystemMessage, ToolMessage, UserMessage
 from tapehead.tool import Tool
 
@@ -66,7 +65,7 @@ class OpenAIProvider:
         self.extra_body = extra_body or {}
         self.timeout = timeout
 
-    async def stream(self, messages: list[Message], tools: Sequence[Tool]) -> AsyncIterator[AnyDelta | Usage]:
+    async def stream(self, messages: list[Message], tools: Sequence[Tool]) -> AsyncIterator[AnyDelta]:
         if tools:
             raise NotImplementedError("工具调用")
         body = {
@@ -102,7 +101,7 @@ class OpenAIProvider:
                         yield TextDelta(text=choice.delta.content)
                 if chunk.usage is not None:
                     details = chunk.usage.prompt_tokens_details
-                    yield Usage(
+                    yield UsageDelta(
                         input_tokens=chunk.usage.prompt_tokens,
                         output_tokens=chunk.usage.completion_tokens,
                         cached_tokens=(details.cached_tokens or 0) if details else 0,

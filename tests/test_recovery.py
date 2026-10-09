@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from tapehead.delta import AnyDelta, TextDelta, ToolUseDelta
+from tapehead.delta import AnyDelta, TextDelta, ToolCallDelta
 from tapehead.head import Head
 from tapehead.media.fs import FsSilo
 from tapehead.message import AssistantMessage, Message, ToolMessage
@@ -33,7 +33,7 @@ class Gateway:
                 for call in message.tool_calls:
                     assert call.id in answered, f"工具调用 {call.id} 没有结果"
         if messages[-1].content == "部署":
-            yield ToolUseDelta(call_id="call-1", name="deploy", arguments="{}")
+            yield ToolCallDelta(id="call-1", name="deploy", arguments="{}")
         else:
             yield TextDelta(text="好的")
 

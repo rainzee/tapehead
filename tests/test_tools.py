@@ -8,7 +8,7 @@ from typing import Annotated
 import pytest
 from msgspec import Meta
 
-from tapehead.delta import AnyDelta, TextDelta, ToolUseDelta
+from tapehead.delta import AnyDelta, TextDelta, ToolCallDelta
 from tapehead.event import StepStart, ToolResult, TurnEnd
 from tapehead.head import Head
 from tapehead.media.mem import MemTape
@@ -35,8 +35,8 @@ class ReadsThenAnswers:
             return
         arguments = json.dumps({"path": last.content.removeprefix("读一下 ")})
         half = len(arguments) // 2
-        yield ToolUseDelta(call_id="call-1", name="read_file", arguments=arguments[:half])
-        yield ToolUseDelta(call_id="call-1", arguments=arguments[half:])
+        yield ToolCallDelta(id="call-1", name="read_file", arguments=arguments[:half])
+        yield ToolCallDelta(id="call-1", arguments=arguments[half:])
 
 
 @pytest.mark.asyncio
@@ -86,7 +86,7 @@ class NeverSatisfied:
     """每一步都再请求一次工具, 永远不给出最终回答"""
 
     async def stream(self, messages: list[Message], tools: Sequence[Tool]) -> AsyncIterator[AnyDelta]:
-        yield ToolUseDelta(call_id="call-1", name="ping", arguments="{}")
+        yield ToolCallDelta(id="call-1", name="ping", arguments="{}")
 
 
 @tool

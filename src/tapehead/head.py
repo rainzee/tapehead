@@ -3,7 +3,7 @@ from collections.abc import AsyncIterator, Sequence
 from msgspec.json import decode
 
 from tapehead import message as msg
-from tapehead.delta import AnyDelta, TextDelta, ToolUseDelta
+from tapehead.delta import AnyDelta, TextDelta, ToolCallDelta
 from tapehead.event import (
     AssistantMessage,
     StepEnd,
@@ -13,7 +13,6 @@ from tapehead.event import (
     TurnEnd,
     TurnEndReason,
     TurnStart,
-    Usage,
     UserMessage,
 )
 from tapehead.provider import Provider
@@ -35,8 +34,8 @@ def settle(deltas: Sequence[AnyDelta]) -> tuple[str, list[msg.ToolCall]]:
     calls: dict[str, msg.ToolCall] = {}
 
     for delta in deltas:
-        if isinstance(delta, ToolUseDelta):
-            call = calls.setdefault(delta.call_id, msg.ToolCall(id=delta.call_id, name="", arguments=""))
+        if isinstance(delta, ToolCallDelta):
+            call = calls.setdefault(delta.id, msg.ToolCall(id=delta.id, name="", arguments=""))
             call.name = delta.name or call.name
             call.arguments += delta.arguments
 
@@ -108,23 +107,19 @@ class Head:
                 yield frame
 
             deltas: list[AnyDelta] = []
-            usage = None
 
             context = play(await tape.read())
             if self.system_prompt:
                 context = [msg.SystemMessage(content=self.system_prompt), *context]
 
-            async for item in self.provider.stream(context, self.tools):
-                if isinstance(item, Usage):
-                    usage = item
-                    continue
-                deltas.append(item)
-                yield item
+            async for delta in self.provider.stream(context, self.tools):
+                deltas.append(delta)
+                yield delta
 
             text, calls = settle(deltas)
 
             message = msg.AssistantMessage(content=text, tool_calls=calls)
-            for frame in await tape.record(AssistantMessage(turn=turn, step=step, message=message, stream=deltas, usage=usage)):
+            for frame in await tape.record(AssistantMessage(turn=turn, step=step, message=message, stream=deltas)):
                 yield frame
 
             for call in calls:

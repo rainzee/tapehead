@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from tapehead.delta import AnyDelta, TextDelta, ToolUseDelta
+from tapehead.delta import AnyDelta, TextDelta, ToolCallDelta
 from tapehead.head import Head
 from tapehead.media.mem import MemTape
 from tapehead.message import AssistantMessage, Message, SystemMessage, ToolMessage, UserMessage
@@ -34,7 +34,7 @@ class FollowsTheCatalog:
         if isinstance(messages[-1], ToolMessage):
             yield TextDelta(text=f"按规范办: {messages[-1].content.splitlines()[-1]}")
         elif "deploy-guide: 部署服务时使用" in system and "部署" in messages[-1].content:
-            yield ToolUseDelta(call_id="call-1", name="skill", arguments='{"name": "deploy-guide"}')
+            yield ToolCallDelta(id="call-1", name="skill", arguments='{"name": "deploy-guide"}')
         else:
             yield TextDelta(text="我不知道")
 
