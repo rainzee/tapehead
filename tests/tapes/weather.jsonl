@@ -1,0 +1,10 @@
+{"recorded_at":1791521701.489648,"event":{"type":"configured","message":{"role":"system","content":"你是天气助手"},"tools":[{"name":"lookup","description":"查询城市天气","parameters":{"title":"lookup","type":"object","properties":{"city":{"type":"string"}},"required":["city"]}}]}}
+{"recorded_at":1791521701.489648,"event":{"type":"prompted","message":{"role":"user","content":"杭州天气"}}}
+{"recorded_at":1791521701.4896827,"event":{"type":"aborted","stream":[{"type":"text","text":"半截"}],"error":"ConnectionError: 429 rate limited"}}
+{"recorded_at":1791521701.4896827,"event":{"type":"yielded","reason":"failed"}}
+{"recorded_at":1791521701.4896967,"event":{"type":"prompted","message":{"role":"user","content":"杭州天气"}}}
+{"recorded_at":1791521701.489726,"event":{"type":"generated","stream":[{"type":"tool_call","id":"call-1","name":"lookup","arguments":"{\"city\": \"\\u676d\\u5dde\"}"},{"type":"usage","input_tokens":10,"output_tokens":2,"cached_tokens":0}],"message":{"role":"assistant","content":"","tool_calls":[{"id":"call-1","name":"lookup","arguments":"{\"city\": \"\\u676d\\u5dde\"}"}]}}}
+{"recorded_at":1791521701.4897292,"event":{"type":"dispatched","call_id":"call-1"}}
+{"recorded_at":1791521701.4924762,"event":{"type":"returned","message":{"role":"tool","call_id":"call-1","content":"杭州: 晴","is_error":false}}}
+{"recorded_at":1791521701.492509,"event":{"type":"generated","stream":[{"type":"text","text":"杭州晴"},{"type":"usage","input_tokens":10,"output_tokens":2,"cached_tokens":0}],"message":{"role":"assistant","content":"杭州晴","tool_calls":[]}}}
+{"recorded_at":1791521701.4925146,"event":{"type":"yielded","reason":"completed"}}

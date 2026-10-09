@@ -1,13 +1,29 @@
 import os
 from pathlib import Path
+from typing import Any
 
+from msgspec import convert
 from msgspec.json import Decoder, decode, encode
 
 from tapehead.event import AnyEvent
 from tapehead.media.mem import MemTape
 from tapehead.tapes.frame import Frame
-from tapehead.tapes.header import TapeHeader
+from tapehead.tapes.header import FORMAT, TapeHeader
 from tapehead.tapes.tape import Access
+
+
+def read_header(path: Path) -> TapeHeader:
+    """读取磁带头, 格式版本不是当前版本时拒绝, 不去解码帧
+
+    参数
+    - path: 磁带头文件
+    """
+
+    data: dict[str, Any] = decode(path.read_bytes())
+    if data.get("format") != FORMAT:
+        raise ValueError(f"{path}: 磁带格式 {data.get('format')} 不受支持, 当前版本是 {FORMAT}")
+
+    return convert(data, TapeHeader)
 
 
 class FsTape(MemTape):
@@ -54,11 +70,11 @@ class FsSilo:
     async def open(self, name: str, access: Access) -> FsTape:
         if access != "write":
             raise NotImplementedError("读句柄")
-        header = decode((self.directory / f"{name}.header.json").read_bytes(), type=TapeHeader)
+        header = read_header(self.directory / f"{name}.header.json")
 
         return FsTape(header, self.directory / f"{name}.jsonl")
 
     async def list(self) -> list[TapeHeader]:
         paths = sorted(self.directory.glob("*.header.json"))
 
-        return [decode(path.read_bytes(), type=TapeHeader) for path in paths]
+        return [read_header(path) for path in paths]

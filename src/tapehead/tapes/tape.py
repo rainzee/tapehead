@@ -18,14 +18,14 @@ class Tape(Protocol):
 
     @property
     def head(self) -> int:
-        """下一帧的序号, 翻录带从 origin.at 起算"""
+        """下一帧的位置, 翻录带从 origin.at 起算"""
         ...
 
     async def record(self, *events: AnyEvent) -> list[Frame]:
         """把事实按顺序录成连续的帧, 读句柄上调用会被拒绝
 
         参数
-        - events: 还没落带的事实, 序号和时间由磁带填写
+        - events: 还没落带的事实, 录入时间由磁带填写
         """
         ...
 
@@ -33,8 +33,8 @@ class Tape(Protocol):
         """读取 [start, stop) 的帧, 翻录带会先拼上父带前缀
 
         参数
-        - start: 起始序号, 含
-        - stop: 结束序号, 不含, 省略时读到末尾
+        - start: 起始位置, 含
+        - stop: 结束位置, 不含, 省略时读到末尾
         """
         ...
 

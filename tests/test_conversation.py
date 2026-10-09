@@ -39,7 +39,7 @@ async def test_second_turn_remembers_the_first() -> None:
     async for _ in await head.run(tape, "我叫什么"):
         pass
 
-    assert play(await tape.read()) == [
+    assert play(await tape.read()).messages == [
         UserMessage(content="我叫小明"),
         AssistantMessage(content="你好"),
         UserMessage(content="我叫什么"),
@@ -63,7 +63,7 @@ async def test_conversation_survives_a_restart(tmp_path: Path) -> None:
     await tape.close()
 
     tape = await FsSilo(tmp_path).open("chat", "write")
-    assert play(await tape.read()) == [
+    assert play(await tape.read()).messages == [
         UserMessage(content="我叫小明"),
         AssistantMessage(content="你好"),
         UserMessage(content="我叫什么"),

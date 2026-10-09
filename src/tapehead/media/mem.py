@@ -25,7 +25,6 @@ class MemTape:
         now = time.time()
         recorded = [Frame(recorded_at=now, event=event) for event in events]
         self.frames.extend(recorded)
-
         return recorded
 
     async def read(self, start: int = 0, stop: int | None = None) -> list[Frame]:

@@ -9,7 +9,7 @@ import pytest
 from msgspec import Meta
 
 from tapehead.delta import AnyDelta, TextDelta, ToolCallDelta
-from tapehead.event import StepStart, ToolResult, TurnEnd
+from tapehead.event import Generated, Returned, Yielded
 from tapehead.head import Head
 from tapehead.media.mem import MemTape
 from tapehead.message import AssistantMessage, Message, ToolMessage, UserMessage
@@ -50,7 +50,7 @@ async def test_agent_reads_a_file_before_answering(tmp_path: Path) -> None:
     async for _ in await Head(ReadsThenAnswers(), [read_file]).run(tape, f"读一下 {note}"):
         pass
 
-    messages = play(await tape.read())
+    messages = play(await tape.read()).messages
     match messages:
         case [
             UserMessage(),
@@ -75,11 +75,11 @@ async def test_a_failing_tool_is_reported_to_the_model(tmp_path: Path) -> None:
         pass
 
     events = [frame.event for frame in await tape.read()]
-    results = [event for event in events if isinstance(event, ToolResult)]
-    assert [isinstance(r.message, ToolMessage) and r.message.is_error for r in results] == [True]
+    results = [event for event in events if isinstance(event, Returned)]
+    assert [r.message.is_error for r in results] == [True]
     assert "FileNotFoundError" in results[0].message.content
-    assert isinstance(events[-1], TurnEnd) and events[-1].reason == "completed"
-    assert play(await tape.read())[-1].content.startswith("工具返回: FileNotFoundError")
+    assert isinstance(events[-1], Yielded) and events[-1].reason == "completed"
+    assert play(await tape.read()).messages[-1].content.startswith("工具返回: FileNotFoundError")
 
 
 class NeverSatisfied:
@@ -109,5 +109,5 @@ async def test_a_model_stuck_on_tools_is_stopped() -> None:
     await asyncio.wait_for(drain(), timeout=5)
 
     events = [frame.event for frame in await tape.read()]
-    assert sum(isinstance(event, StepStart) for event in events) == 3
-    assert isinstance(events[-1], TurnEnd) and events[-1].reason == "max_steps"
+    assert sum(isinstance(event, Generated) for event in events) == 3
+    assert isinstance(events[-1], Yielded) and events[-1].reason == "max_steps"

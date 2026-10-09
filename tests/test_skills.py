@@ -50,9 +50,15 @@ async def test_agent_loads_a_skill_listed_in_the_system_prompt(tmp_path: Path) -
     async for _ in await Head(FollowsTheCatalog(), skills=load_skills(tmp_path)).run(tape, "怎么部署这个服务"):
         pass
 
-    messages = play(await tape.read())
+    messages = play(await tape.read()).messages
     match messages:
-        case [UserMessage(), AssistantMessage(tool_calls=[call]), ToolMessage(), AssistantMessage(content=answer)]:
+        case [
+            SystemMessage(),
+            UserMessage(),
+            AssistantMessage(tool_calls=[call]),
+            ToolMessage(),
+            AssistantMessage(content=answer),
+        ]:
             assert call.name == "skill"
         case _:
             pytest.fail(f"消息序列不符合预期: {messages}")

@@ -1,0 +1,56 @@
+{
+  "messages": [
+    {
+      "role": "system",
+      "content": "你是天气助手"
+    },
+    {
+      "role": "user",
+      "content": "杭州天气"
+    },
+    {
+      "role": "user",
+      "content": "杭州天气"
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "tool_calls": [
+        {
+          "id": "call-1",
+          "name": "lookup",
+          "arguments": "{\"city\": \"\\u676d\\u5dde\"}"
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "call_id": "call-1",
+      "content": "杭州: 晴",
+      "is_error": false
+    },
+    {
+      "role": "assistant",
+      "content": "杭州晴",
+      "tool_calls": []
+    }
+  ],
+  "tools": [
+    {
+      "name": "lookup",
+      "description": "查询城市天气",
+      "parameters": {
+        "title": "lookup",
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "city"
+        ]
+      }
+    }
+  ]
+}
