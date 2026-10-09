@@ -89,7 +89,6 @@ class ToolResult(Event):
     turn: int
     step: int
     message: Message
-    is_error: bool = False
 
 
 class Anchor(Event):

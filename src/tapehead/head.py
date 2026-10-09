@@ -2,6 +2,7 @@ from collections.abc import AsyncIterator, Sequence
 
 from msgspec.json import decode
 
+from tapehead import message as msg
 from tapehead.delta import AnyDelta, TextDelta, ToolUseDelta
 from tapehead.event import (
     AssistantMessage,
@@ -15,7 +16,6 @@ from tapehead.event import (
     Usage,
     UserMessage,
 )
-from tapehead.message import Message, ToolUse
 from tapehead.provider import Provider
 from tapehead.skill import Skill, render_skills, skill_tool
 from tapehead.stream import AsyncStreamEvents, StreamItem
@@ -24,7 +24,7 @@ from tapehead.tapes.tape import Tape
 from tapehead.tool import Tool
 
 
-def settle(deltas: Sequence[AnyDelta]) -> tuple[str, list[ToolUse]]:
+def settle(deltas: Sequence[AnyDelta]) -> tuple[str, list[msg.ToolCall]]:
     """把一次模型调用的增量结算成正文和工具调用请求
 
     参数
@@ -32,15 +32,15 @@ def settle(deltas: Sequence[AnyDelta]) -> tuple[str, list[ToolUse]]:
     """
 
     text = "".join(delta.text for delta in deltas if isinstance(delta, TextDelta))
-    uses: dict[str, ToolUse] = {}
+    calls: dict[str, msg.ToolCall] = {}
 
     for delta in deltas:
         if isinstance(delta, ToolUseDelta):
-            use = uses.setdefault(delta.call_id, ToolUse(call_id=delta.call_id, name="", arguments=""))
-            use.name = delta.name or use.name
-            use.arguments += delta.arguments
+            call = calls.setdefault(delta.call_id, msg.ToolCall(id=delta.call_id, name="", arguments=""))
+            call.name = delta.name or call.name
+            call.arguments += delta.arguments
 
-    return text, list(uses.values())
+    return text, list(calls.values())
 
 
 class Head:
@@ -78,19 +78,19 @@ class Head:
 
         return AsyncStreamEvents(self.drive(tape, prompt))
 
-    async def execute(self, use: ToolUse) -> tuple[str, bool]:
+    async def execute(self, call: msg.ToolCall) -> tuple[str, bool]:
         """执行一次工具调用, 返回结果文本和是否出错, 工具不存在, 参数不合法, 执行失败都交还给模型
 
         参数
-        - use: 模型请求的工具调用
+        - call: 模型请求的工具调用
         """
 
-        tool = next((tool for tool in self.tools if tool.name == use.name), None)
+        tool = next((tool for tool in self.tools if tool.name == call.name), None)
         if tool is None:
-            return f"未知工具: {use.name}", True
+            return f"未知工具: {call.name}", True
 
         try:
-            return await tool.call(decode(use.arguments, type=tool.args)), False
+            return await tool.call(decode(call.arguments, type=tool.args)), False
         except Exception as error:  # noqa: BLE001 工具的任何失败都交还给模型
             return f"{type(error).__name__}: {error}", True
 
@@ -99,7 +99,7 @@ class Head:
         for frame in await tape.record(*mend(frames)):
             yield frame
         turn = sum(isinstance(frame.event, TurnStart) for frame in frames)
-        for frame in await tape.record(TurnStart(turn=turn), UserMessage(message=Message(role="user", content=prompt))):
+        for frame in await tape.record(TurnStart(turn=turn), UserMessage(message=msg.UserMessage(content=prompt))):
             yield frame
 
         reason: TurnEndReason = "max_steps"
@@ -112,7 +112,7 @@ class Head:
 
             context = play(await tape.read())
             if self.system_prompt:
-                context = [Message(role="system", content=self.system_prompt), *context]
+                context = [msg.SystemMessage(content=self.system_prompt), *context]
 
             async for item in self.provider.stream(context, self.tools):
                 if isinstance(item, Usage):
@@ -121,27 +121,27 @@ class Head:
                 deltas.append(item)
                 yield item
 
-            text, uses = settle(deltas)
+            text, calls = settle(deltas)
 
-            message = Message(role="assistant", content=text, tool_uses=uses)
+            message = msg.AssistantMessage(content=text, tool_calls=calls)
             for frame in await tape.record(AssistantMessage(turn=turn, step=step, message=message, stream=deltas, usage=usage)):
                 yield frame
 
-            for use in uses:
+            for call in calls:
                 for frame in await tape.record(
-                    ToolCall(turn=turn, step=step, call_id=use.call_id, name=use.name, arguments=use.arguments)
+                    ToolCall(turn=turn, step=step, call_id=call.id, name=call.name, arguments=call.arguments)
                 ):
                     yield frame
-                content, is_error = await self.execute(use)
-                result = Message(role="tool", content=content, tool_call_id=use.call_id)
+                content, is_error = await self.execute(call)
+                result = msg.ToolMessage(call_id=call.id, content=content, is_error=is_error)
 
-                for frame in await tape.record(ToolResult(turn=turn, step=step, message=result, is_error=is_error)):
+                for frame in await tape.record(ToolResult(turn=turn, step=step, message=result)):
                     yield frame
 
             for frame in await tape.record(StepEnd(turn=turn, step=step)):
                 yield frame
 
-            if not uses:
+            if not calls:
                 reason = "completed"
                 break
 

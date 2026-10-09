@@ -7,7 +7,7 @@ import pytest
 from tapehead.delta import AnyDelta, TextDelta, ToolUseDelta
 from tapehead.head import Head
 from tapehead.media.mem import MemTape
-from tapehead.message import Message
+from tapehead.message import AssistantMessage, Message, SystemMessage, ToolMessage, UserMessage
 from tapehead.skill import load_skills
 from tapehead.tapes.header import TapeHeader
 from tapehead.tapes.play import play
@@ -30,8 +30,8 @@ class FollowsTheCatalog:
     """只靠系统提示里的目录知道有哪些技能, 问题匹配时先加载, 拿到正文后照着答"""
 
     async def stream(self, messages: list[Message], tools: Sequence[Tool]) -> AsyncIterator[AnyDelta]:
-        system = messages[0].content if messages[0].role == "system" else ""
-        if messages[-1].role == "tool":
+        system = messages[0].content if isinstance(messages[0], SystemMessage) else ""
+        if isinstance(messages[-1], ToolMessage):
             yield TextDelta(text=f"按规范办: {messages[-1].content.splitlines()[-1]}")
         elif "deploy-guide: 部署服务时使用" in system and "部署" in messages[-1].content:
             yield ToolUseDelta(call_id="call-1", name="skill", arguments='{"name": "deploy-guide"}')
@@ -51,9 +51,12 @@ async def test_agent_loads_a_skill_listed_in_the_system_prompt(tmp_path: Path) -
         pass
 
     messages = play(await tape.read())
-    assert [m.role for m in messages] == ["user", "assistant", "tool", "assistant"]
-    assert messages[1].tool_uses[0].name == "skill"
-    assert messages[3].content == "按规范办: 发布前先跑冒烟测试, 发布后看五分钟错误率."
+    match messages:
+        case [UserMessage(), AssistantMessage(tool_calls=[call]), ToolMessage(), AssistantMessage(content=answer)]:
+            assert call.name == "skill"
+        case _:
+            pytest.fail(f"消息序列不符合预期: {messages}")
+    assert answer == "按规范办: 发布前先跑冒烟测试, 发布后看五分钟错误率."
 
 
 @pytest.mark.parametrize(

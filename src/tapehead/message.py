@@ -1,20 +1,39 @@
-from typing import Literal
-
 from msgspec import Struct
 
 
-class ToolUse(Struct):
-    """模型消息里携带的一次工具调用请求"""
+class ToolCall(Struct):
+    """工具调用"""
 
-    call_id: str
+    id: str
     name: str
     arguments: str
 
 
-class Message(Struct):
-    """模型可见的一条消息"""
+class SystemMessage(Struct, tag="system", tag_field="role"):
+    """系统消息"""
 
-    role: Literal["system", "user", "assistant", "tool"]
     content: str
-    tool_uses: list[ToolUse] = []
-    tool_call_id: str | None = None
+
+
+class UserMessage(Struct, tag="user", tag_field="role"):
+    """用户消息"""
+
+    content: str
+
+
+class AssistantMessage(Struct, tag="assistant", tag_field="role"):
+    """模型消息"""
+
+    content: str
+    tool_calls: list[ToolCall] = []
+
+
+class ToolMessage(Struct, tag="tool", tag_field="role"):
+    """工具消息"""
+
+    call_id: str
+    content: str
+    is_error: bool = False
+
+
+type Message = SystemMessage | UserMessage | AssistantMessage | ToolMessage

@@ -7,7 +7,7 @@ from msgspec.json import Decoder
 
 from tapehead.delta import AnyDelta, ReasoningDelta, TextDelta
 from tapehead.event import Usage
-from tapehead.message import Message
+from tapehead.message import AssistantMessage, Message, SystemMessage, ToolMessage, UserMessage
 from tapehead.tool import Tool
 
 
@@ -110,7 +110,12 @@ class OpenAIProvider:
 
     @staticmethod
     def encode_message(message: Message) -> dict[str, Any]:
-        if message.tool_uses or message.tool_call_id:
-            raise NotImplementedError("工具调用")
-
-        return {"role": message.role, "content": message.content}
+        match message:
+            case SystemMessage(content=content):
+                return {"role": "system", "content": content}
+            case UserMessage(content=content):
+                return {"role": "user", "content": content}
+            case AssistantMessage(content=content, tool_calls=[]):
+                return {"role": "assistant", "content": content}
+            case AssistantMessage() | ToolMessage():
+                raise NotImplementedError("工具调用")

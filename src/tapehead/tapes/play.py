@@ -1,5 +1,6 @@
 from collections.abc import Sequence
 
+from tapehead import message as msg
 from tapehead.event import (
     Anchor,
     AnyEvent,
@@ -11,7 +12,6 @@ from tapehead.event import (
     TurnStart,
     UserMessage,
 )
-from tapehead.message import Message
 from tapehead.tapes.frame import Frame
 
 
@@ -29,14 +29,14 @@ def cue(frames: Sequence[Frame]) -> int:
     return 0
 
 
-def play(frames: Sequence[Frame]) -> list[Message]:
+def play(frames: Sequence[Frame]) -> list[msg.Message]:
     """从回放起点把帧折叠成模型可见的消息
 
     参数
     - frames: 按序号排列的帧
     """
 
-    messages: list[Message] = []
+    messages: list[msg.Message] = []
     for frame in frames[cue(frames) :]:
         match frame.event:
             case UserMessage(message=message) | AssistantMessage(message=message) | ToolResult(message=message):
@@ -66,7 +66,9 @@ def mend(frames: Sequence[Frame]) -> list[AnyEvent]:
         return []
 
     turn = opened.turn
-    answered = {event.message.tool_call_id for event in tail if isinstance(event, ToolResult)}
+    answered = {
+        event.message.call_id for event in tail if isinstance(event, ToolResult) and isinstance(event.message, msg.ToolMessage)
+    }
     open_step: int | None = None
     fixes: list[AnyEvent] = []
     for event in tail:
@@ -75,11 +77,11 @@ def mend(frames: Sequence[Frame]) -> list[AnyEvent]:
                 open_step = step
             case StepEnd():
                 open_step = None
-            case AssistantMessage(step=step, message=message):
-                for use in message.tool_uses:
-                    if use.call_id not in answered:
-                        result = Message(role="tool", content="工具执行被中断, 没有结果", tool_call_id=use.call_id)
-                        fixes.append(ToolResult(turn=turn, step=step, message=result, is_error=True))
+            case AssistantMessage(step=step, message=msg.AssistantMessage(tool_calls=calls)):
+                for call in calls:
+                    if call.id not in answered:
+                        result = msg.ToolMessage(call_id=call.id, content="工具执行被中断, 没有结果", is_error=True)
+                        fixes.append(ToolResult(turn=turn, step=step, message=result))
     if open_step is not None:
         fixes.append(StepEnd(turn=turn, step=open_step))
     fixes.append(TurnEnd(turn=turn, reason="interrupted"))

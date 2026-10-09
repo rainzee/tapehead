@@ -7,7 +7,7 @@ import pytest
 from tapehead.delta import AnyDelta, TextDelta, ToolUseDelta
 from tapehead.head import Head
 from tapehead.media.fs import FsSilo
-from tapehead.message import Message
+from tapehead.message import AssistantMessage, Message, ToolMessage
 from tapehead.tapes.header import TapeHeader
 from tapehead.tool import Tool, tool
 
@@ -27,10 +27,11 @@ class Gateway:
     """像真实网关一样, 拒绝带着没有结果的工具调用的上下文"""
 
     async def stream(self, messages: list[Message], tools: Sequence[Tool]) -> AsyncIterator[AnyDelta]:
-        answered = {m.tool_call_id for m in messages if m.role == "tool"}
+        answered = {m.call_id for m in messages if isinstance(m, ToolMessage)}
         for message in messages:
-            for use in message.tool_uses:
-                assert use.call_id in answered, f"工具调用 {use.call_id} 没有结果"
+            if isinstance(message, AssistantMessage):
+                for call in message.tool_calls:
+                    assert call.id in answered, f"工具调用 {call.id} 没有结果"
         if messages[-1].content == "部署":
             yield ToolUseDelta(call_id="call-1", name="deploy", arguments="{}")
         else:

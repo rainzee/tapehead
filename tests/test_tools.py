@@ -12,7 +12,7 @@ from tapehead.delta import AnyDelta, TextDelta, ToolUseDelta
 from tapehead.event import StepStart, ToolResult, TurnEnd
 from tapehead.head import Head
 from tapehead.media.mem import MemTape
-from tapehead.message import Message
+from tapehead.message import AssistantMessage, Message, ToolMessage, UserMessage
 from tapehead.tapes.header import TapeHeader
 from tapehead.tapes.play import play
 from tapehead.tool import Tool, tool
@@ -30,7 +30,7 @@ class ReadsThenAnswers:
 
     async def stream(self, messages: list[Message], tools: Sequence[Tool]) -> AsyncIterator[AnyDelta]:
         last = messages[-1]
-        if last.role == "tool":
+        if isinstance(last, ToolMessage):
             yield TextDelta(text=f"工具返回: {last.content}")
             return
         arguments = json.dumps({"path": last.content.removeprefix("读一下 ")})
@@ -51,10 +51,18 @@ async def test_agent_reads_a_file_before_answering(tmp_path: Path) -> None:
         pass
 
     messages = play(await tape.read())
-    assert [m.role for m in messages] == ["user", "assistant", "tool", "assistant"]
-    assert messages[1].tool_uses[0].name == "read_file"
-    assert messages[2].tool_call_id == messages[1].tool_uses[0].call_id
-    assert messages[3].content == "工具返回: 明天下午三点开会"
+    match messages:
+        case [
+            UserMessage(),
+            AssistantMessage(tool_calls=[call]),
+            ToolMessage(call_id=call_id),
+            AssistantMessage(content=answer),
+        ]:
+            assert call.name == "read_file"
+            assert call_id == call.id
+        case _:
+            pytest.fail(f"消息序列不符合预期: {messages}")
+    assert answer == "工具返回: 明天下午三点开会"
 
 
 @pytest.mark.asyncio
@@ -68,7 +76,7 @@ async def test_a_failing_tool_is_reported_to_the_model(tmp_path: Path) -> None:
 
     events = [frame.event for frame in await tape.read()]
     results = [event for event in events if isinstance(event, ToolResult)]
-    assert [r.is_error for r in results] == [True]
+    assert [isinstance(r.message, ToolMessage) and r.message.is_error for r in results] == [True]
     assert "FileNotFoundError" in results[0].message.content
     assert isinstance(events[-1], TurnEnd) and events[-1].reason == "completed"
     assert play(await tape.read())[-1].content.startswith("工具返回: FileNotFoundError")

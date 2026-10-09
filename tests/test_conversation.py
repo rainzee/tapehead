@@ -8,7 +8,7 @@ from tapehead.delta import AnyDelta, TextDelta
 from tapehead.head import Head
 from tapehead.media.fs import FsSilo
 from tapehead.media.mem import MemTape
-from tapehead.message import Message
+from tapehead.message import AssistantMessage, Message, UserMessage
 from tapehead.tapes.header import TapeHeader
 from tapehead.tapes.play import play
 from tapehead.tool import Tool
@@ -39,11 +39,11 @@ async def test_second_turn_remembers_the_first() -> None:
     async for _ in await head.run(tape, "我叫什么"):
         pass
 
-    assert [(m.role, m.content) for m in play(await tape.read())] == [
-        ("user", "我叫小明"),
-        ("assistant", "你好"),
-        ("user", "我叫什么"),
-        ("assistant", "你叫小明"),
+    assert play(await tape.read()) == [
+        UserMessage(content="我叫小明"),
+        AssistantMessage(content="你好"),
+        UserMessage(content="我叫什么"),
+        AssistantMessage(content="你叫小明"),
     ]
 
 
@@ -63,10 +63,10 @@ async def test_conversation_survives_a_restart(tmp_path: Path) -> None:
     await tape.close()
 
     tape = await FsSilo(tmp_path).open("chat", "write")
-    assert [(m.role, m.content) for m in play(await tape.read())] == [
-        ("user", "我叫小明"),
-        ("assistant", "你好"),
-        ("user", "我叫什么"),
-        ("assistant", "你叫小明"),
+    assert play(await tape.read()) == [
+        UserMessage(content="我叫小明"),
+        AssistantMessage(content="你好"),
+        UserMessage(content="我叫什么"),
+        AssistantMessage(content="你叫小明"),
     ]
     await tape.close()
