@@ -8,29 +8,29 @@ from msgspec.json import Decoder, decode, encode
 from tapehead.event import Event
 from tapehead.media.mem import MemTape
 from tapehead.tapes.frame import Frame
-from tapehead.tapes.header import FORMAT, TapeHeader
+from tapehead.tapes.label import FORMAT, Label
 from tapehead.tapes.tape import Access
 
 
-def read_header(path: Path) -> TapeHeader:
-    """读取磁带头, 格式版本不是当前版本时拒绝, 不去解码帧
+def read_label(path: Path) -> Label:
+    """读取磁带标签, 格式版本不是当前版本时拒绝, 不去解码帧
 
     参数
-    - path: 磁带头文件
+    - path: 标签文件
     """
 
     data: dict[str, Any] = decode(path.read_bytes())
     if data.get("format") != FORMAT:
         raise ValueError(f"{path}: 磁带格式 {data.get('format')} 不受支持, 当前版本是 {FORMAT}")
 
-    return convert(data, TapeHeader)
+    return convert(data, Label)
 
 
 class FsTape(MemTape):
     """文件磁带 JSONL"""
 
-    def __init__(self, header: TapeHeader, frames_path: Path) -> None:
-        super().__init__(header)
+    def __init__(self, label: Label, frames_path: Path) -> None:
+        super().__init__(label)
         decoder = Decoder(Frame)
         self.frames = [decoder.decode(line) for line in frames_path.read_bytes().splitlines()]
         self.file = frames_path.open("ab")
@@ -58,23 +58,23 @@ class FsSilo:
         self.directory = directory
         directory.mkdir(parents=True, exist_ok=True)
 
-    async def create(self, header: TapeHeader) -> FsTape:
-        if header.origin is not None:
+    async def create(self, label: Label) -> FsTape:
+        if label.origin is not None:
             raise NotImplementedError("翻录")
-        frames_path = self.directory / f"{header.name}.jsonl"
+        frames_path = self.directory / f"{label.name}.jsonl"
         frames_path.touch(exist_ok=False)
-        (self.directory / f"{header.name}.header.json").write_bytes(encode(header))
+        (self.directory / f"{label.name}.label.json").write_bytes(encode(label))
 
-        return FsTape(header, frames_path)
+        return FsTape(label, frames_path)
 
     async def open(self, name: str, access: Access) -> FsTape:
         if access != "write":
             raise NotImplementedError("读句柄")
-        header = read_header(self.directory / f"{name}.header.json")
+        label = read_label(self.directory / f"{name}.label.json")
 
-        return FsTape(header, self.directory / f"{name}.jsonl")
+        return FsTape(label, self.directory / f"{name}.jsonl")
 
-    async def list(self) -> list[TapeHeader]:
-        paths = sorted(self.directory.glob("*.header.json"))
+    async def list(self) -> list[Label]:
+        paths = sorted(self.directory.glob("*.label.json"))
 
-        return [read_header(path) for path in paths]
+        return [read_label(path) for path in paths]

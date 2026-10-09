@@ -13,7 +13,7 @@ from tapehead.event import Generated, Returned, Yielded
 from tapehead.head import Head
 from tapehead.media.mem import MemTape
 from tapehead.message import AssistantMessage, Message, ToolMessage, UserMessage
-from tapehead.tapes.header import TapeHeader
+from tapehead.tapes.label import Label
 from tapehead.tapes.play import play
 from tapehead.tool import ToolSpec, tool
 
@@ -45,7 +45,7 @@ async def test_agent_reads_a_file_before_answering(tmp_path: Path) -> None:
 
     note = tmp_path / "note.txt"
     note.write_text("明天下午三点开会", encoding="utf-8")
-    tape = MemTape(TapeHeader(name="chat", created_at=time.time()))
+    tape = MemTape(Label(name="chat", created_at=time.time()))
 
     async for _ in await Head(ReadsThenAnswers(), [read_file]).run(tape, f"读一下 {note}"):
         pass
@@ -69,7 +69,7 @@ async def test_agent_reads_a_file_before_answering(tmp_path: Path) -> None:
 async def test_a_failing_tool_is_reported_to_the_model(tmp_path: Path) -> None:
     """用户让 agent 读一个不存在的文件, 工具失败不会中断这一轮, 失败交还给模型"""
 
-    tape = MemTape(TapeHeader(name="chat", created_at=time.time()))
+    tape = MemTape(Label(name="chat", created_at=time.time()))
 
     async for _ in await Head(ReadsThenAnswers(), [read_file]).run(tape, f"读一下 {tmp_path / 'missing.txt'}"):
         pass
@@ -100,7 +100,7 @@ def ping() -> str:
 async def test_a_model_stuck_on_tools_is_stopped() -> None:
     """模型卡在反复请求工具上, 这一轮在步数上限处收尾, 磁带上不留下没闭合的轮次"""
 
-    tape = MemTape(TapeHeader(name="chat", created_at=time.time()))
+    tape = MemTape(Label(name="chat", created_at=time.time()))
 
     async def drain() -> None:
         async for _ in await Head(NeverSatisfied(), [ping], max_steps=3).run(tape, "ping 到天荒地老"):

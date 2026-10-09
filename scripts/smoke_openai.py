@@ -13,7 +13,7 @@ from tapehead.head import Head
 from tapehead.media.mem import MemTape
 from tapehead.providers.openai import OpenAIProvider
 from tapehead.tapes.frame import Frame
-from tapehead.tapes.header import TapeHeader
+from tapehead.tapes.label import Label
 
 
 async def main() -> None:
@@ -21,7 +21,7 @@ async def main() -> None:
     provider = OpenAIProvider(
         os.environ["TAPEHEAD_BASE_URL"], os.environ["TAPEHEAD_API_KEY"], os.environ["TAPEHEAD_MODEL"], extra_body
     )
-    tape = MemTape(TapeHeader(name="smoke", created_at=time.time()))
+    tape = MemTape(Label(name="smoke", created_at=time.time()))
     position = 0
     async for item in await Head(provider).run(tape, "9.11 和 9.9 哪个大? 一句话回答"):
         if isinstance(item, Frame):

@@ -8,7 +8,7 @@ from tapehead.delta import Delta, TextDelta, ToolCallDelta
 from tapehead.head import Head
 from tapehead.media.fs import FsSilo
 from tapehead.message import AssistantMessage, Message, ToolMessage
-from tapehead.tapes.header import TapeHeader
+from tapehead.tapes.label import Label
 from tapehead.tool import ToolSpec, tool
 
 
@@ -42,7 +42,7 @@ class Gateway:
 async def test_conversation_continues_after_an_interrupted_tool(tmp_path: Path) -> None:
     """部署到一半被打断, 第二天重新打开同一盘带接着聊, 模型不会拿到悬空的工具调用"""
 
-    tape = await FsSilo(tmp_path).create(TapeHeader(name="chat", created_at=time.time()))
+    tape = await FsSilo(tmp_path).create(Label(name="chat", created_at=time.time()))
     with pytest.raises(Killed):
         async for _ in await Head(Gateway(), [deploy]).run(tape, "部署"):
             pass

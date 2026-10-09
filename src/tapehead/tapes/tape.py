@@ -2,7 +2,7 @@ from typing import Literal, Protocol
 
 from tapehead.event import Event
 from tapehead.tapes.frame import Frame
-from tapehead.tapes.header import TapeHeader
+from tapehead.tapes.label import Label
 
 type Access = Literal["read", "write"]
 
@@ -11,7 +11,7 @@ class Tape(Protocol):
     """磁带"""
 
     @property
-    def header(self) -> TapeHeader: ...
+    def label(self) -> Label: ...
 
     @property
     def access(self) -> Access: ...

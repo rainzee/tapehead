@@ -13,7 +13,7 @@ from tapehead.head import Head
 from tapehead.media.fs import FsSilo
 from tapehead.media.mem import MemTape
 from tapehead.message import AssistantMessage, Message, ToolMessage, UserMessage
-from tapehead.tapes.header import TapeHeader
+from tapehead.tapes.label import Label
 from tapehead.tapes.play import Context, mend, play
 from tapehead.tool import ToolSpec, tool
 
@@ -47,7 +47,7 @@ class Flaky:
 async def test_every_model_call_can_be_replayed_from_the_tape() -> None:
     """模型调用失败一次后用户重问, 磁带上每一次调用, 包括失败的那次, 都能从它之前的前缀精确还原当时的输入"""
 
-    tape = MemTape(TapeHeader(name="chat", created_at=time.time()))
+    tape = MemTape(Label(name="chat", created_at=time.time()))
     provider = Flaky()
     head = Head(provider, [lookup], system_prompt="你是天气助手")
 
@@ -69,7 +69,7 @@ def failed(call_id: str, content: str) -> Returned:
 
 
 async def mended(*events: Prompted | Generated | Dispatched | Returned) -> list:
-    tape = MemTape(TapeHeader(name="chat", created_at=time.time()))
+    tape = MemTape(Label(name="chat", created_at=time.time()))
     await tape.record(*events)
 
     return mend(await tape.read())
@@ -125,7 +125,7 @@ async def test_a_recorded_tape_still_plays_the_same(tmp_path: Path) -> None:
 async def test_a_tape_of_an_unknown_format_is_refused(tmp_path: Path) -> None:
     """打开一盘没有格式版本的旧磁带, 直接拒绝, 而不是在解码帧时报出难懂的错误"""
 
-    (tmp_path / "old.header.json").write_text('{"name": "old", "created_at": 0}', encoding="utf-8")
+    (tmp_path / "old.label.json").write_text('{"name": "old", "created_at": 0}', encoding="utf-8")
     (tmp_path / "old.jsonl").write_text('{"seq": 0, "time": 0, "event": {"type": "UserMessage"}}\n', encoding="utf-8")
 
     with pytest.raises(ValueError, match="磁带格式 None 不受支持"):

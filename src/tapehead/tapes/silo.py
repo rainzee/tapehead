@@ -1,17 +1,17 @@
 from typing import Protocol
 
-from tapehead.tapes.header import TapeHeader
+from tapehead.tapes.label import Label
 from tapehead.tapes.tape import Access, Tape
 
 
 class Silo(Protocol):
     """磁带库, 负责磁带的存放和出入库"""
 
-    async def create(self, header: TapeHeader) -> Tape:
-        """新建一盘带并取得写句柄, header.origin 非空即为翻录
+    async def create(self, label: Label) -> Tape:
+        """新建一盘带并取得写句柄, label.origin 非空即为翻录
 
         参数
-        - header: 磁带头
+        - label: 磁带标签
         """
         ...
 
@@ -24,6 +24,6 @@ class Silo(Protocol):
         """
         ...
 
-    async def list(self) -> list[TapeHeader]:
-        """列出所有磁带头"""
+    async def list(self) -> list[Label]:
+        """列出所有磁带标签"""
         ...

@@ -9,7 +9,7 @@ from tapehead.head import Head
 from tapehead.media.mem import MemTape
 from tapehead.message import AssistantMessage, Message, SystemMessage, ToolMessage, UserMessage
 from tapehead.skill import load_skills
-from tapehead.tapes.header import TapeHeader
+from tapehead.tapes.label import Label
 from tapehead.tapes.play import play
 from tapehead.tool import ToolSpec
 
@@ -45,7 +45,7 @@ async def test_agent_loads_a_skill_listed_in_the_system_prompt(tmp_path: Path) -
 
     (tmp_path / "deploy-guide").mkdir()
     (tmp_path / "deploy-guide" / "SKILL.md").write_text(DEPLOY_SKILL, encoding="utf-8")
-    tape = MemTape(TapeHeader(name="chat", created_at=time.time()))
+    tape = MemTape(Label(name="chat", created_at=time.time()))
 
     async for _ in await Head(FollowsTheCatalog(), skills=load_skills(tmp_path)).run(tape, "怎么部署这个服务"):
         pass

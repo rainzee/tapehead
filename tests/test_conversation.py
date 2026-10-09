@@ -9,7 +9,7 @@ from tapehead.head import Head
 from tapehead.media.fs import FsSilo
 from tapehead.media.mem import MemTape
 from tapehead.message import AssistantMessage, Message, UserMessage
-from tapehead.tapes.header import TapeHeader
+from tapehead.tapes.label import Label
 from tapehead.tapes.play import play
 from tapehead.tool import ToolSpec
 
@@ -31,7 +31,7 @@ class ForgetfulProvider:
 async def test_second_turn_remembers_the_first() -> None:
     """用户先自我介绍, 再追问, 模型只能从磁带回放的上下文里知道名字"""
 
-    tape = MemTape(TapeHeader(name="chat", created_at=time.time()))
+    tape = MemTape(Label(name="chat", created_at=time.time()))
     head = Head(ForgetfulProvider())
 
     async for _ in await head.run(tape, "我叫小明"):
@@ -52,7 +52,7 @@ async def test_conversation_survives_a_restart(tmp_path: Path) -> None:
     """用户自我介绍后关掉程序, 第二天重新打开同一盘带接着问, 模型仍然知道名字"""
 
     silo = FsSilo(tmp_path)
-    tape = await silo.create(TapeHeader(name="chat", created_at=time.time()))
+    tape = await silo.create(Label(name="chat", created_at=time.time()))
     async for _ in await Head(ForgetfulProvider()).run(tape, "我叫小明"):
         pass
     await tape.close()

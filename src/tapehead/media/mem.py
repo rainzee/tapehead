@@ -2,15 +2,15 @@ import time
 
 from tapehead.event import Event
 from tapehead.tapes.frame import Frame
-from tapehead.tapes.header import TapeHeader
+from tapehead.tapes.label import Label
 from tapehead.tapes.tape import Access
 
 
 class MemTape:
     """内存磁带"""
 
-    def __init__(self, header: TapeHeader) -> None:
-        self.header = header
+    def __init__(self, label: Label) -> None:
+        self.label = label
         self.frames: list[Frame] = []
 
     @property
@@ -43,14 +43,14 @@ class MemSilo:
     def __init__(self) -> None:
         self.tapes: dict[str, MemTape] = {}
 
-    async def create(self, header: TapeHeader) -> MemTape:
-        if header.origin is not None:
+    async def create(self, label: Label) -> MemTape:
+        if label.origin is not None:
             raise NotImplementedError("翻录")
-        if header.name in self.tapes:
-            raise FileExistsError(header.name)
-        self.tapes[header.name] = MemTape(header)
+        if label.name in self.tapes:
+            raise FileExistsError(label.name)
+        self.tapes[label.name] = MemTape(label)
 
-        return self.tapes[header.name]
+        return self.tapes[label.name]
 
     async def open(self, name: str, access: Access) -> MemTape:
         if access != "write":
@@ -58,5 +58,5 @@ class MemSilo:
 
         return self.tapes[name]
 
-    async def list(self) -> list[TapeHeader]:
-        return [tape.header for tape in self.tapes.values()]
+    async def list(self) -> list[Label]:
+        return [tape.label for tape in self.tapes.values()]
