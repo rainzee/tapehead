@@ -8,7 +8,7 @@ from typing import Annotated
 import pytest
 from msgspec import Meta
 
-from tapehead.delta import AnyDelta, TextDelta, ToolCallDelta
+from tapehead.delta import Delta, TextDelta, ToolCallDelta
 from tapehead.event import Generated, Returned, Yielded
 from tapehead.head import Head
 from tapehead.media.mem import MemTape
@@ -28,7 +28,7 @@ async def read_file(path: Annotated[str, Meta(description="文件路径")]) -> s
 class ReadsThenAnswers:
     """被要求读文件时先请求工具, 拿到工具结果后复述"""
 
-    async def stream(self, messages: list[Message], tools: Sequence[ToolSpec]) -> AsyncIterator[AnyDelta]:
+    async def stream(self, messages: list[Message], tools: Sequence[ToolSpec]) -> AsyncIterator[Delta]:
         last = messages[-1]
         if isinstance(last, ToolMessage):
             yield TextDelta(text=f"工具返回: {last.content}")
@@ -85,7 +85,7 @@ async def test_a_failing_tool_is_reported_to_the_model(tmp_path: Path) -> None:
 class NeverSatisfied:
     """每一步都再请求一次工具, 永远不给出最终回答"""
 
-    async def stream(self, messages: list[Message], tools: Sequence[ToolSpec]) -> AsyncIterator[AnyDelta]:
+    async def stream(self, messages: list[Message], tools: Sequence[ToolSpec]) -> AsyncIterator[Delta]:
         yield ToolCallDelta(id="call-1", name="ping", arguments="{}")
 
 

@@ -1,23 +1,19 @@
 from msgspec import Struct
 
 
-class Delta(Struct, tag_field="type"):
-    """一次模型调用流式产出的增量"""
-
-
-class TextDelta(Delta, tag="text"):
+class TextDelta(Struct, tag="text"):
     """正文增量"""
 
     text: str
 
 
-class ReasoningDelta(Delta, tag="reasoning"):
+class ReasoningDelta(Struct, tag="reasoning"):
     """推理增量"""
 
     text: str
 
 
-class ToolCallDelta(Delta, tag="tool_call"):
+class ToolCallDelta(Struct, tag="tool_call"):
     """工具调用增量, 同一 id 的片段按序拼接"""
 
     id: str
@@ -25,7 +21,7 @@ class ToolCallDelta(Delta, tag="tool_call"):
     arguments: str = ""
 
 
-class UsageDelta(Delta, tag="usage"):
+class UsageDelta(Struct, tag="usage"):
     """一次模型调用的 token 用量"""
 
     input_tokens: int
@@ -33,4 +29,4 @@ class UsageDelta(Delta, tag="usage"):
     cached_tokens: int = 0
 
 
-type AnyDelta = TextDelta | ReasoningDelta | ToolCallDelta | UsageDelta
+type Delta = TextDelta | ReasoningDelta | ToolCallDelta | UsageDelta

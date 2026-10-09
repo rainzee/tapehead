@@ -1,9 +1,9 @@
 from collections.abc import AsyncIterator
 
-from tapehead.delta import AnyDelta
+from tapehead.delta import Delta
 from tapehead.tapes.frame import Frame
 
-type StreamItem = Frame | AnyDelta
+type StreamItem = Frame | Delta
 
 
 class AsyncStreamEvents:

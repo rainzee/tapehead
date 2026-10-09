@@ -3,12 +3,12 @@ from typing import Any, Literal
 
 from msgspec import Struct
 
-from tapehead.delta import AnyDelta, TextDelta, ToolCallDelta
+from tapehead.delta import Delta, TextDelta, ToolCallDelta
 from tapehead.message import AssistantMessage, SystemMessage, ToolCall, ToolMessage, UserMessage
 from tapehead.tool import ToolSpec
 
 
-def settle(stream: Sequence[AnyDelta]) -> AssistantMessage:
+def settle(stream: Sequence[Delta]) -> AssistantMessage:
     """把一次模型调用的增量结算成模型消息
 
     参数
@@ -27,27 +27,23 @@ def settle(stream: Sequence[AnyDelta]) -> AssistantMessage:
     return AssistantMessage(content=text, tool_calls=list(calls.values()))
 
 
-class Event(Struct, tag_field="type"):
-    """磁带上的一件事实, 带 message 的事件进入模型上下文"""
-
-
-class Configured(Event, tag="configured"):
+class Configured(Struct, tag="configured"):
     """宿主设定了系统提示和工具, 只在变化时落带, 系统提示为空时不进上下文"""
 
     message: SystemMessage
     tools: list[ToolSpec] = []
 
 
-class Prompted(Event, tag="prompted"):
+class Prompted(Struct, tag="prompted"):
     """用户发出输入, 一轮由此开始"""
 
     message: UserMessage
 
 
-class Generated(Event, tag="generated"):
+class Generated(Struct, tag="generated"):
     """模型完成一次调用, message 是结果, stream 是过程, 二者必须一致"""
 
-    stream: list[AnyDelta]
+    stream: list[Delta]
     message: AssistantMessage
 
     def __post_init__(self) -> None:
@@ -55,20 +51,20 @@ class Generated(Event, tag="generated"):
             raise ValueError("message 与 stream 结算的结果不一致")
 
 
-class Aborted(Event, tag="aborted"):
+class Aborted(Struct, tag="aborted"):
     """模型调用没有完成, 已收到的增量只记账, 不进上下文"""
 
-    stream: list[AnyDelta]
+    stream: list[Delta]
     error: str
 
 
-class Dispatched(Event, tag="dispatched"):
+class Dispatched(Struct, tag="dispatched"):
     """harness 开始执行一次工具调用"""
 
     call_id: str
 
 
-class Returned(Event, tag="returned"):
+class Returned(Struct, tag="returned"):
     """工具返回结果"""
 
     message: ToolMessage
@@ -77,13 +73,13 @@ class Returned(Event, tag="returned"):
 type YieldReason = Literal["completed", "cancelled", "failed", "interrupted", "max_steps"]
 
 
-class Yielded(Event, tag="yielded"):
+class Yielded(Struct, tag="yielded"):
     """agent 把控制权交还用户, 一轮由此结束, interrupted 只由修复方补写"""
 
     reason: YieldReason
 
 
-class Anchored(Event, tag="anchored"):
+class Anchored(Struct, tag="anchored"):
     """打下回放起点, message 是代替之前全部历史的摘要"""
 
     name: str
@@ -91,7 +87,7 @@ class Anchored(Event, tag="anchored"):
     state: dict[str, Any] = {}
 
 
-class Custom(Event, tag="custom"):
+class Custom(Struct, tag="custom"):
     """扩展事件的统一出口, 内核只认 name 和 ignorable
 
     ignorable 为 False 时, 不认识 name 的读者必须拒绝回放
@@ -102,4 +98,4 @@ class Custom(Event, tag="custom"):
     ignorable: bool = False
 
 
-type AnyEvent = Configured | Prompted | Generated | Aborted | Dispatched | Returned | Yielded | Anchored | Custom
+type Event = Configured | Prompted | Generated | Aborted | Dispatched | Returned | Yielded | Anchored | Custom

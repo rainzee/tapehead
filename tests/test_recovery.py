@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from tapehead.delta import AnyDelta, TextDelta, ToolCallDelta
+from tapehead.delta import Delta, TextDelta, ToolCallDelta
 from tapehead.head import Head
 from tapehead.media.fs import FsSilo
 from tapehead.message import AssistantMessage, Message, ToolMessage
@@ -26,7 +26,7 @@ def deploy() -> str:
 class Gateway:
     """像真实网关一样, 拒绝带着没有结果的工具调用的上下文"""
 
-    async def stream(self, messages: list[Message], tools: Sequence[ToolSpec]) -> AsyncIterator[AnyDelta]:
+    async def stream(self, messages: list[Message], tools: Sequence[ToolSpec]) -> AsyncIterator[Delta]:
         answered = {m.call_id for m in messages if isinstance(m, ToolMessage)}
         for message in messages:
             if isinstance(message, AssistantMessage):

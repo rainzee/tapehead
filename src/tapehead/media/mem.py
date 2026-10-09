@@ -1,6 +1,6 @@
 import time
 
-from tapehead.event import AnyEvent
+from tapehead.event import Event
 from tapehead.tapes.frame import Frame
 from tapehead.tapes.header import TapeHeader
 from tapehead.tapes.tape import Access
@@ -21,7 +21,7 @@ class MemTape:
     def head(self) -> int:
         return len(self.frames)
 
-    async def record(self, *events: AnyEvent) -> list[Frame]:
+    async def record(self, *events: Event) -> list[Frame]:
         now = time.time()
         recorded = [Frame(recorded_at=now, event=event) for event in events]
         self.frames.extend(recorded)

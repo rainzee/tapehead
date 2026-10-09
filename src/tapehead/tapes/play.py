@@ -2,7 +2,7 @@ from collections.abc import Sequence
 
 from msgspec import Struct
 
-from tapehead.event import Anchored, AnyEvent, Configured, Dispatched, Generated, Prompted, Returned, Yielded
+from tapehead.event import Anchored, Configured, Dispatched, Event, Generated, Prompted, Returned, Yielded
 from tapehead.message import Message, ToolMessage
 from tapehead.tapes.frame import Frame
 from tapehead.tool import ToolSpec
@@ -42,7 +42,8 @@ def cue(frames: Sequence[Frame]) -> int:
 def play(frames: Sequence[Frame]) -> Context:
     """把帧投影成模型调用的输入, 每个 Generated 的输入都等于它之前的前缀的投影
 
-    配置取整盘带上最后一个 Configured, 消息从回放起点开始收集带 message 的事件
+    带 message 的事件进入上下文, 不带的只记账
+    配置取整盘带上最后一个 Configured, 消息从回放起点开始收集
 
     参数
     - frames: 按位置排列的帧
@@ -63,7 +64,7 @@ def play(frames: Sequence[Frame]) -> Context:
     return Context(messages=messages, tools=configured.tools if configured is not None else [])
 
 
-def mend(frames: Sequence[Frame]) -> list[AnyEvent]:
+def mend(frames: Sequence[Frame]) -> list[Event]:
     """为中断的一轮算出补写事件, 由持有写句柄的一方追加, 从不改写已录的帧
 
     模型请求过但没有结果的工具调用补一个出错的 Returned, 按是否派发区分原因, 最后补 Yielded(interrupted)
@@ -85,7 +86,7 @@ def mend(frames: Sequence[Frame]) -> list[AnyEvent]:
     requested = [call.id for event in tail if isinstance(event, Generated) for call in event.message.tool_calls]
     dispatched = {event.call_id for event in tail if isinstance(event, Dispatched)}
     returned = {event.message.call_id for event in tail if isinstance(event, Returned)}
-    fixes: list[AnyEvent] = [
+    fixes: list[Event] = [
         Returned(
             message=ToolMessage(
                 call_id=call_id,

@@ -5,7 +5,7 @@ from typing import Any
 from msgspec import convert
 from msgspec.json import Decoder, decode, encode
 
-from tapehead.event import AnyEvent
+from tapehead.event import Event
 from tapehead.media.mem import MemTape
 from tapehead.tapes.frame import Frame
 from tapehead.tapes.header import FORMAT, TapeHeader
@@ -35,7 +35,7 @@ class FsTape(MemTape):
         self.frames = [decoder.decode(line) for line in frames_path.read_bytes().splitlines()]
         self.file = frames_path.open("ab")
 
-    async def record(self, *events: AnyEvent) -> list[Frame]:
+    async def record(self, *events: Event) -> list[Frame]:
         recorded = await super().record(*events)
         for frame in recorded:
             self.file.write(encode(frame) + b"\n")

@@ -5,7 +5,7 @@ import httpx
 from msgspec import Struct
 from msgspec.json import Decoder
 
-from tapehead.delta import AnyDelta, ReasoningDelta, TextDelta, UsageDelta
+from tapehead.delta import Delta, ReasoningDelta, TextDelta, UsageDelta
 from tapehead.message import AssistantMessage, Message, SystemMessage, ToolMessage, UserMessage
 from tapehead.tool import ToolSpec
 
@@ -65,7 +65,7 @@ class OpenAIProvider:
         self.extra_body = extra_body or {}
         self.timeout = timeout
 
-    async def stream(self, messages: list[Message], tools: Sequence[ToolSpec]) -> AsyncIterator[AnyDelta]:
+    async def stream(self, messages: list[Message], tools: Sequence[ToolSpec]) -> AsyncIterator[Delta]:
         if tools:
             raise NotImplementedError("工具调用")
         body = {

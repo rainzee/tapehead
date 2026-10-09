@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from msgspec import to_builtins
 
-from tapehead.delta import AnyDelta, TextDelta, ToolCallDelta, UsageDelta
+from tapehead.delta import Delta, TextDelta, ToolCallDelta, UsageDelta
 from tapehead.event import Aborted, Dispatched, Generated, Prompted, Returned, Yielded, settle
 from tapehead.head import Head
 from tapehead.media.fs import FsSilo
@@ -31,7 +31,7 @@ class Flaky:
     def __init__(self) -> None:
         self.inputs: list[Context] = []
 
-    async def stream(self, messages: list[Message], tools: Sequence[ToolSpec]) -> AsyncIterator[AnyDelta]:
+    async def stream(self, messages: list[Message], tools: Sequence[ToolSpec]) -> AsyncIterator[Delta]:
         self.inputs.append(Context(messages=list(messages), tools=list(tools)))
         if len(self.inputs) == 1:
             yield TextDelta(text="半截")

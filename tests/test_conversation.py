@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from tapehead.delta import AnyDelta, TextDelta
+from tapehead.delta import Delta, TextDelta
 from tapehead.head import Head
 from tapehead.media.fs import FsSilo
 from tapehead.media.mem import MemTape
@@ -17,7 +17,7 @@ from tapehead.tool import ToolSpec
 class ForgetfulProvider:
     """只靠收到的上下文回答, 被问到名字时, 之前没人说过就答不上来"""
 
-    async def stream(self, messages: list[Message], tools: Sequence[ToolSpec]) -> AsyncIterator[AnyDelta]:
+    async def stream(self, messages: list[Message], tools: Sequence[ToolSpec]) -> AsyncIterator[Delta]:
         *earlier, asked = messages
         if "我叫什么" not in asked.content:
             yield TextDelta(text="你好")

@@ -2,12 +2,12 @@ from collections.abc import AsyncIterator, Sequence
 
 from msgspec.json import decode
 
-from tapehead.delta import AnyDelta
+from tapehead.delta import Delta
 from tapehead.event import (
     Aborted,
-    AnyEvent,
     Configured,
     Dispatched,
+    Event,
     Generated,
     Prompted,
     Returned,
@@ -85,7 +85,7 @@ class Head:
 
     async def drive(self, tape: Tape, prompt: str) -> AsyncIterator[StreamItem]:
         frames = await tape.read()
-        opening: list[AnyEvent] = mend(frames)
+        opening: list[Event] = mend(frames)
         if configuration(frames) != self.configured:
             opening.append(self.configured)
         opening.append(Prompted(message=UserMessage(content=prompt)))
@@ -95,7 +95,7 @@ class Head:
         reason: YieldReason = "max_steps"
         for _ in range(self.max_steps):
             context = play(await tape.read())
-            stream: list[AnyDelta] = []
+            stream: list[Delta] = []
             try:
                 async for delta in self.provider.stream(context.messages, context.tools):
                     stream.append(delta)

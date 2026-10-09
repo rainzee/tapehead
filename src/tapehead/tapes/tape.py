@@ -1,6 +1,6 @@
 from typing import Literal, Protocol
 
-from tapehead.event import AnyEvent
+from tapehead.event import Event
 from tapehead.tapes.frame import Frame
 from tapehead.tapes.header import TapeHeader
 
@@ -21,7 +21,7 @@ class Tape(Protocol):
         """下一帧的位置, 翻录带从 origin.at 起算"""
         ...
 
-    async def record(self, *events: AnyEvent) -> list[Frame]:
+    async def record(self, *events: Event) -> list[Frame]:
         """把事实按顺序录成连续的帧, 读句柄上调用会被拒绝
 
         参数

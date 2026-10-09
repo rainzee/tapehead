@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from tapehead.delta import AnyDelta, TextDelta, ToolCallDelta
+from tapehead.delta import Delta, TextDelta, ToolCallDelta
 from tapehead.head import Head
 from tapehead.media.mem import MemTape
 from tapehead.message import AssistantMessage, Message, SystemMessage, ToolMessage, UserMessage
@@ -29,7 +29,7 @@ license: MIT
 class FollowsTheCatalog:
     """只靠系统提示里的目录知道有哪些技能, 问题匹配时先加载, 拿到正文后照着答"""
 
-    async def stream(self, messages: list[Message], tools: Sequence[ToolSpec]) -> AsyncIterator[AnyDelta]:
+    async def stream(self, messages: list[Message], tools: Sequence[ToolSpec]) -> AsyncIterator[Delta]:
         system = messages[0].content if isinstance(messages[0], SystemMessage) else ""
         if isinstance(messages[-1], ToolMessage):
             yield TextDelta(text=f"按规范办: {messages[-1].content.splitlines()[-1]}")
