@@ -8,7 +8,7 @@ class Silo(Protocol):
     """磁带库, 负责磁带的存放和出入库"""
 
     async def create(self, label: Label) -> Tape:
-        """新建一盘带并取得写句柄, label.origin 非空即为翻录
+        """新建一盘带并取得写句柄
 
         参数
         - label: 磁带标签

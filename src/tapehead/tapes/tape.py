@@ -18,7 +18,7 @@ class Tape(Protocol):
 
     @property
     def head(self) -> int:
-        """下一帧的位置, 翻录带从 origin.at 起算"""
+        """下一帧的位置"""
         ...
 
     async def record(self, *events: Event) -> list[Frame]:
@@ -30,7 +30,7 @@ class Tape(Protocol):
         ...
 
     async def read(self, start: int = 0, stop: int | None = None) -> list[Frame]:
-        """读取 [start, stop) 的帧, 翻录带会先拼上父带前缀
+        """读取 [start, stop) 的帧
 
         参数
         - start: 起始位置, 含

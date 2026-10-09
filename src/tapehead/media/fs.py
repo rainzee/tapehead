@@ -53,8 +53,6 @@ class FsSilo:
         directory.mkdir(parents=True, exist_ok=True)
 
     async def create(self, label: Label) -> FsTape:
-        if label.origin is not None:
-            raise NotImplementedError("翻录")
         frames_path = self.directory / f"{label.name}.jsonl"
         frames_path.touch(exist_ok=False)
         (self.directory / f"{label.name}.label.json").write_bytes(encode(label))

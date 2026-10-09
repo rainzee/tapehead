@@ -44,8 +44,6 @@ class MemSilo:
         self.tapes: dict[str, MemTape] = {}
 
     async def create(self, label: Label) -> MemTape:
-        if label.origin is not None:
-            raise NotImplementedError("翻录")
         if label.name in self.tapes:
             raise FileExistsError(label.name)
         self.tapes[label.name] = MemTape(label)
