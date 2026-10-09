@@ -12,10 +12,6 @@ class MemTape:
         self.label = label
         self.frames: list[Frame] = []
 
-    @property
-    def head(self) -> int:
-        return len(self.frames)
-
     async def record(self, *events: Event) -> list[Frame]:
         now = time.time()
         recorded = [Frame(recorded_at=now, event=event) for event in events]

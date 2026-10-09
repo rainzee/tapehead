@@ -11,11 +11,6 @@ class Tape(Protocol):
     @property
     def label(self) -> Label: ...
 
-    @property
-    def head(self) -> int:
-        """下一帧的位置"""
-        ...
-
     async def record(self, *events: Event) -> list[Frame]:
         """把事实按顺序录成连续的帧
 
