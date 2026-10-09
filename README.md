@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/rainzee/tapehead/main/assets/logo-dark.svg">
-    <img src="https://raw.githubusercontent.com/rainzee/tapehead/main/assets/logo.svg" width="120" alt="tapehead">
+    <img src="https://raw.githubusercontent.com/rainzee/tapehead/main/assets/logo.svg" width="240" alt="tapehead">
   </picture>
 </p>
 
