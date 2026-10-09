@@ -9,7 +9,7 @@ from tapehead.head import Head
 from tapehead.media.fs import FsSilo
 from tapehead.message import AssistantMessage, Message, ToolMessage
 from tapehead.tapes.header import TapeHeader
-from tapehead.tool import Tool, tool
+from tapehead.tool import ToolSpec, tool
 
 
 class Killed(BaseException):
@@ -26,7 +26,7 @@ def deploy() -> str:
 class Gateway:
     """像真实网关一样, 拒绝带着没有结果的工具调用的上下文"""
 
-    async def stream(self, messages: list[Message], tools: Sequence[Tool]) -> AsyncIterator[AnyDelta]:
+    async def stream(self, messages: list[Message], tools: Sequence[ToolSpec]) -> AsyncIterator[AnyDelta]:
         answered = {m.call_id for m in messages if isinstance(m, ToolMessage)}
         for message in messages:
             if isinstance(message, AssistantMessage):

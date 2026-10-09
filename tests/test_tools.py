@@ -15,7 +15,7 @@ from tapehead.media.mem import MemTape
 from tapehead.message import AssistantMessage, Message, ToolMessage, UserMessage
 from tapehead.tapes.header import TapeHeader
 from tapehead.tapes.play import play
-from tapehead.tool import Tool, tool
+from tapehead.tool import ToolSpec, tool
 
 
 @tool
@@ -28,7 +28,7 @@ async def read_file(path: Annotated[str, Meta(description="文件路径")]) -> s
 class ReadsThenAnswers:
     """被要求读文件时先请求工具, 拿到工具结果后复述"""
 
-    async def stream(self, messages: list[Message], tools: Sequence[Tool]) -> AsyncIterator[AnyDelta]:
+    async def stream(self, messages: list[Message], tools: Sequence[ToolSpec]) -> AsyncIterator[AnyDelta]:
         last = messages[-1]
         if isinstance(last, ToolMessage):
             yield TextDelta(text=f"工具返回: {last.content}")
@@ -85,7 +85,7 @@ async def test_a_failing_tool_is_reported_to_the_model(tmp_path: Path) -> None:
 class NeverSatisfied:
     """每一步都再请求一次工具, 永远不给出最终回答"""
 
-    async def stream(self, messages: list[Message], tools: Sequence[Tool]) -> AsyncIterator[AnyDelta]:
+    async def stream(self, messages: list[Message], tools: Sequence[ToolSpec]) -> AsyncIterator[AnyDelta]:
         yield ToolCallDelta(id="call-1", name="ping", arguments="{}")
 
 

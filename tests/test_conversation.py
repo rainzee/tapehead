@@ -11,13 +11,13 @@ from tapehead.media.mem import MemTape
 from tapehead.message import AssistantMessage, Message, UserMessage
 from tapehead.tapes.header import TapeHeader
 from tapehead.tapes.play import play
-from tapehead.tool import Tool
+from tapehead.tool import ToolSpec
 
 
 class ForgetfulProvider:
     """只靠收到的上下文回答, 被问到名字时, 之前没人说过就答不上来"""
 
-    async def stream(self, messages: list[Message], tools: Sequence[Tool]) -> AsyncIterator[AnyDelta]:
+    async def stream(self, messages: list[Message], tools: Sequence[ToolSpec]) -> AsyncIterator[AnyDelta]:
         *earlier, asked = messages
         if "我叫什么" not in asked.content:
             yield TextDelta(text="你好")

@@ -112,7 +112,7 @@ class Head:
             if self.system_prompt:
                 context = [msg.SystemMessage(content=self.system_prompt), *context]
 
-            async for delta in self.provider.stream(context, self.tools):
+            async for delta in self.provider.stream(context, [tool.spec for tool in self.tools]):
                 deltas.append(delta)
                 yield delta
 

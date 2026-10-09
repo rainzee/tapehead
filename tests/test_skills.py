@@ -11,7 +11,7 @@ from tapehead.message import AssistantMessage, Message, SystemMessage, ToolMessa
 from tapehead.skill import load_skills
 from tapehead.tapes.header import TapeHeader
 from tapehead.tapes.play import play
-from tapehead.tool import Tool
+from tapehead.tool import ToolSpec
 
 DEPLOY_SKILL = """\
 ---
@@ -29,7 +29,7 @@ license: MIT
 class FollowsTheCatalog:
     """只靠系统提示里的目录知道有哪些技能, 问题匹配时先加载, 拿到正文后照着答"""
 
-    async def stream(self, messages: list[Message], tools: Sequence[Tool]) -> AsyncIterator[AnyDelta]:
+    async def stream(self, messages: list[Message], tools: Sequence[ToolSpec]) -> AsyncIterator[AnyDelta]:
         system = messages[0].content if isinstance(messages[0], SystemMessage) else ""
         if isinstance(messages[-1], ToolMessage):
             yield TextDelta(text=f"按规范办: {messages[-1].content.splitlines()[-1]}")

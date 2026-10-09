@@ -6,7 +6,7 @@ from collections.abc import Callable
 from typing import Any, overload
 
 from msgspec import Struct, defstruct
-from msgspec.json import encode
+from msgspec.json import encode, schema_components
 
 
 def derive_args(func: Callable, name: str) -> type[Struct]:
@@ -20,6 +20,14 @@ def derive_args(func: Callable, name: str) -> type[Struct]:
         fields.append((param.name, annotation) if param.default is param.empty else (param.name, annotation, param.default))
 
     return defstruct(name, fields)
+
+
+class ToolSpec(Struct):
+    """模型可见的工具定义"""
+
+    name: str
+    description: str
+    parameters: dict[str, Any]
 
 
 class Tool:
@@ -37,6 +45,17 @@ class Tool:
         self.description = description if description is not None else (inspect.getdoc(func) or "")
         self.spread = parameters is None
         self.args = derive_args(func, self.name) if parameters is None else parameters
+
+    @property
+    def spec(self) -> ToolSpec:
+        """给模型看的工具定义, 参数 schema 由参数 Struct 生成"""
+
+        (ref,), components = schema_components([self.args], ref_template="#/$defs/{name}")
+        parameters = components.pop(ref["$ref"].removeprefix("#/$defs/"))
+        if components:
+            parameters["$defs"] = components
+
+        return ToolSpec(name=self.name, description=self.description, parameters=parameters)
 
     async def call(self, args: Struct) -> str:
         """执行一次调用, 返回给模型看的结果, 失败时直接抛异常
