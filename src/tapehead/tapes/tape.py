@@ -1,10 +1,8 @@
-from typing import Literal, Protocol
+from typing import Protocol
 
 from tapehead.event import Event
 from tapehead.tapes.frame import Frame
 from tapehead.tapes.label import Label
-
-type Access = Literal["read", "write"]
 
 
 class Tape(Protocol):
@@ -14,15 +12,12 @@ class Tape(Protocol):
     def label(self) -> Label: ...
 
     @property
-    def access(self) -> Access: ...
-
-    @property
     def head(self) -> int:
         """下一帧的位置"""
         ...
 
     async def record(self, *events: Event) -> list[Frame]:
-        """把事实按顺序录成连续的帧, 读句柄上调用会被拒绝
+        """把事实按顺序录成连续的帧
 
         参数
         - events: 还没落带的事实, 录入时间由磁带填写
@@ -43,5 +38,5 @@ class Tape(Protocol):
         ...
 
     async def close(self) -> None:
-        """释放句柄, 写句柄会先 flush 再交出写权"""
+        """释放句柄, 先 flush 再释放"""
         ...

@@ -7,7 +7,6 @@ from tapehead.event import Event
 from tapehead.media.mem import MemTape
 from tapehead.tapes.frame import Frame
 from tapehead.tapes.label import Label
-from tapehead.tapes.tape import Access
 
 
 def read_label(path: Path) -> Label:
@@ -59,9 +58,7 @@ class FsSilo:
 
         return FsTape(label, frames_path)
 
-    async def open(self, name: str, access: Access) -> FsTape:
-        if access != "write":
-            raise NotImplementedError("读句柄")
+    async def open(self, name: str) -> FsTape:
         label = read_label(self.directory / f"{name}.label.json")
 
         return FsTape(label, self.directory / f"{name}.jsonl")

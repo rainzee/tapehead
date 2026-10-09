@@ -65,7 +65,7 @@ def play(frames: Sequence[Frame]) -> Context:
 
 
 def mend(frames: Sequence[Frame]) -> list[Event]:
-    """为中断的一轮算出补写事件, 由持有写句柄的一方追加, 从不改写已录的帧
+    """为中断的一轮算出补写事件, 由调用方追加, 从不改写已录的帧
 
     模型请求过但没有结果的工具调用补一个出错的 Returned, 按是否派发区分原因, 最后补 Yielded(interrupted)
 

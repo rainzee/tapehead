@@ -115,7 +115,7 @@ async def test_a_recorded_tape_still_plays_the_same(tmp_path: Path) -> None:
 
     for file in GOLDEN.glob("weather.*"):
         shutil.copy(file, tmp_path)
-    tape = await FsSilo(tmp_path).open("weather", "write")
+    tape = await FsSilo(tmp_path).open("weather")
 
     assert to_builtins(play(await tape.read())) == json.loads((tmp_path / "weather.expected.json").read_text(encoding="utf-8"))
     await tape.close()

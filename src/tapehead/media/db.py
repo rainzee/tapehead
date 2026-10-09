@@ -1,5 +1,5 @@
 from tapehead.tapes.label import Label
-from tapehead.tapes.tape import Access, Tape
+from tapehead.tapes.tape import Tape
 
 
 class DbSilo:
@@ -8,7 +8,7 @@ class DbSilo:
     async def create(self, label: Label) -> Tape:
         raise NotImplementedError
 
-    async def open(self, name: str, access: Access) -> Tape:
+    async def open(self, name: str) -> Tape:
         raise NotImplementedError
 
     async def list(self) -> list[Label]:

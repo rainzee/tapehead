@@ -48,7 +48,7 @@ async def test_conversation_continues_after_an_interrupted_tool(tmp_path: Path) 
             pass
     await tape.close()
 
-    tape = await FsSilo(tmp_path).open("chat", "write")
+    tape = await FsSilo(tmp_path).open("chat")
     async for _ in await Head(Gateway(), [deploy]).run(tape, "你还在吗"):
         pass
     await tape.close()

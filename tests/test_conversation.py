@@ -57,12 +57,12 @@ async def test_conversation_survives_a_restart(tmp_path: Path) -> None:
         pass
     await tape.close()
 
-    tape = await FsSilo(tmp_path).open("chat", "write")
+    tape = await FsSilo(tmp_path).open("chat")
     async for _ in await Head(ForgetfulProvider()).run(tape, "我叫什么"):
         pass
     await tape.close()
 
-    tape = await FsSilo(tmp_path).open("chat", "write")
+    tape = await FsSilo(tmp_path).open("chat")
     assert play(await tape.read()).messages == [
         UserMessage(content="我叫小明"),
         AssistantMessage(content="你好"),

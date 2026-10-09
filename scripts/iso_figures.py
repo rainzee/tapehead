@@ -465,25 +465,6 @@ def append(f: Fig):
         f.path([(x, y, 5), (x, y, 104)], "wire")
 
 
-@fig("writer", "Single writer", "单写者: 同一时刻只有一个写头 · 写头在末尾落下新帧")
-def writer(f: Fig):
-    f.plate(290, 120, label="LOCK · 1 WRITER")
-    f.box(10, 16, 5, 270, 6, 6, 1.5)
-    for i in range(6):
-        frame_box(f, 20 + i * 36, 34, i, d=52, h=16)
-    f.on("top", (236, 34, 5), 28, 52, rect(0, 0, 28, 52, 3, "zone") + halo(14, 26, 18, "breathe"))
-    f.open("drop", f.shift((0, 0, 14)))
-    frame_box(f, 236, 34, 6, d=52, h=16, cls="glass")
-    f.close()
-    f.box(236, 15, 11, 28, 10, 34, 2)
-    f.open("bob", f.shift((0, 0, -3)))
-    f.box(244, 52, 26, 12, 16, 19, 1.5, front=led(6, 10, True, 1.5, "blink"))
-    f.close()
-    f.box(10, 98, 5, 270, 6, 6, 1.5)
-    f.box(236, 95, 11, 28, 10, 34, 2)
-    f.box(232, 13, 45, 36, 94, 10, 3, top=slits(8, 28, 3, 14, 80), front=text(18, 7, "W", 5, "middle"), side=text(47, 7, "WRITER · 01", 4.2, "middle", 1))
-
-
 @fig("repair", "Repair by append", "未闭合的帧不去改它, 追加一帧把它闭合 · 闭合信号回指")
 def repair(f: Fig):
     f.plate(200, 100)

@@ -3,7 +3,6 @@ import time
 from tapehead.event import Event
 from tapehead.tapes.frame import Frame
 from tapehead.tapes.label import Label
-from tapehead.tapes.tape import Access
 
 
 class MemTape:
@@ -12,10 +11,6 @@ class MemTape:
     def __init__(self, label: Label) -> None:
         self.label = label
         self.frames: list[Frame] = []
-
-    @property
-    def access(self) -> Access:
-        return "write"
 
     @property
     def head(self) -> int:
@@ -50,10 +45,7 @@ class MemSilo:
 
         return self.tapes[label.name]
 
-    async def open(self, name: str, access: Access) -> MemTape:
-        if access != "write":
-            raise NotImplementedError("读句柄")
-
+    async def open(self, name: str) -> MemTape:
         return self.tapes[name]
 
     async def list(self) -> list[Label]:
