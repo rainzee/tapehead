@@ -121,17 +121,6 @@ async def test_a_recorded_tape_still_plays_the_same(tmp_path: Path) -> None:
     await tape.close()
 
 
-@pytest.mark.asyncio
-async def test_a_tape_of_an_unknown_format_is_refused(tmp_path: Path) -> None:
-    """打开一盘没有格式版本的旧磁带, 直接拒绝, 而不是在解码帧时报出难懂的错误"""
-
-    (tmp_path / "old.label.json").write_text('{"name": "old", "created_at": 0}', encoding="utf-8")
-    (tmp_path / "old.jsonl").write_text('{"seq": 0, "time": 0, "event": {"type": "UserMessage"}}\n', encoding="utf-8")
-
-    with pytest.raises(ValueError, match="磁带格式 None 不受支持"):
-        await FsSilo(tmp_path).open("old", "write")
-
-
 def test_a_generation_cannot_disagree_with_its_stream() -> None:
     """模型消息和它的增量流说的不是同一件事时, 这条事实根本构造不出来, 解码磁带时同样被拒绝"""
 

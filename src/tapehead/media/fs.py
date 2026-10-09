@@ -1,29 +1,23 @@
 import os
 from pathlib import Path
-from typing import Any
 
-from msgspec import convert
 from msgspec.json import Decoder, decode, encode
 
 from tapehead.event import Event
 from tapehead.media.mem import MemTape
 from tapehead.tapes.frame import Frame
-from tapehead.tapes.label import FORMAT, Label
+from tapehead.tapes.label import Label
 from tapehead.tapes.tape import Access
 
 
 def read_label(path: Path) -> Label:
-    """读取磁带标签, 格式版本不是当前版本时拒绝, 不去解码帧
+    """读取磁带标签
 
     参数
     - path: 标签文件
     """
 
-    data: dict[str, Any] = decode(path.read_bytes())
-    if data.get("format") != FORMAT:
-        raise ValueError(f"{path}: 磁带格式 {data.get('format')} 不受支持, 当前版本是 {FORMAT}")
-
-    return convert(data, Label)
+    return decode(path.read_bytes(), type=Label)
 
 
 class FsTape(MemTape):
