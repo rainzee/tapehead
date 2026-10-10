@@ -23,7 +23,7 @@ async def main() -> None:
     )
     tape = MemTape(Label(name="smoke", created_at=time.time()))
     position = 0
-    async for item in await Head(provider).run(tape, "9.11 和 9.9 哪个大? 一句话回答"):
+    async for item in Head(provider).run(tape, "9.11 和 9.9 哪个大? 一句话回答"):
         if isinstance(item, Frame):
             print(f"\n[frame {position}] {item.event}")
             position += 1

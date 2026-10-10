@@ -44,11 +44,11 @@ async def test_conversation_continues_after_an_interrupted_tool(tmp_path: Path) 
 
     tape = await FsSilo(tmp_path).create(Label(name="chat", created_at=time.time()))
     with pytest.raises(Killed):
-        async for _ in await Head(Gateway(), [deploy]).run(tape, "部署"):
+        async for _ in Head(Gateway(), [deploy]).run(tape, "部署"):
             pass
     await tape.close()
 
     tape = await FsSilo(tmp_path).open("chat")
-    async for _ in await Head(Gateway(), [deploy]).run(tape, "你还在吗"):
+    async for _ in Head(Gateway(), [deploy]).run(tape, "你还在吗"):
         pass
     await tape.close()

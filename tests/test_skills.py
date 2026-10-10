@@ -47,7 +47,7 @@ async def test_agent_loads_a_skill_listed_in_the_system_prompt(tmp_path: Path) -
     (tmp_path / "deploy-guide" / "SKILL.md").write_text(DEPLOY_SKILL, encoding="utf-8")
     tape = MemTape(Label(name="chat", created_at=time.time()))
 
-    async for _ in await Head(FollowsTheCatalog(), skills=load_skills(tmp_path)).run(tape, "怎么部署这个服务"):
+    async for _ in Head(FollowsTheCatalog(), skills=load_skills(tmp_path)).run(tape, "怎么部署这个服务"):
         pass
 
     messages = play(await tape.read()).messages

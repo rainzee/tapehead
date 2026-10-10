@@ -18,7 +18,7 @@ from tapehead.event import (
 from tapehead.message import SystemMessage, ToolCall, ToolMessage, UserMessage
 from tapehead.provider import Provider
 from tapehead.skill import Skill, render_skills, skill_tool
-from tapehead.stream import AsyncStreamEvents, StreamItem
+from tapehead.stream import StreamItem
 from tapehead.tapes.play import configuration, mend, play
 from tapehead.tapes.tape import Tape
 from tapehead.tool import Tool
@@ -55,35 +55,14 @@ class Head:
         )
         self.max_steps = max_steps
 
-    async def run(self, tape: Tape, prompt: str) -> AsyncStreamEvents:
-        """在磁带上跑一轮对话
+    async def run(self, tape: Tape, prompt: str) -> AsyncIterator[StreamItem]:
+        """在磁带上跑一轮对话, 实时交出已落带的帧和不落带的增量
 
         参数
         - tape: 磁带, 上下文从它回放, 结果录回它
         - prompt: 用户输入
         """
 
-        return AsyncStreamEvents(self.drive(tape, prompt))
-
-    async def execute(self, call: ToolCall) -> Returned:
-        """执行一次工具调用, 工具不存在, 参数不合法, 执行失败都作为出错的结果交还给模型
-
-        参数
-        - call: 模型请求的工具调用
-        """
-
-        tool = next((tool for tool in self.tools if tool.name == call.name), None)
-        if tool is None:
-            return Returned(message=ToolMessage(call_id=call.id, content=f"未知工具: {call.name}", is_error=True))
-
-        try:
-            content = await tool.call(decode(call.arguments, type=tool.args))
-        except Exception as error:  # noqa: BLE001 工具的任何失败都交还给模型
-            return Returned(message=ToolMessage(call_id=call.id, content=f"{type(error).__name__}: {error}", is_error=True))
-
-        return Returned(message=ToolMessage(call_id=call.id, content=content))
-
-    async def drive(self, tape: Tape, prompt: str) -> AsyncIterator[StreamItem]:
         frames = await tape.read()
         opening: list[Event] = mend(frames)
         if configuration(frames) != self.configured:
@@ -123,3 +102,21 @@ class Head:
 
         for frame in await tape.record(Yielded(reason=reason)):
             yield frame
+
+    async def execute(self, call: ToolCall) -> Returned:
+        """执行一次工具调用, 工具不存在, 参数不合法, 执行失败都作为出错的结果交还给模型
+
+        参数
+        - call: 模型请求的工具调用
+        """
+
+        tool = next((tool for tool in self.tools if tool.name == call.name), None)
+        if tool is None:
+            return Returned(message=ToolMessage(call_id=call.id, content=f"未知工具: {call.name}", is_error=True))
+
+        try:
+            content = await tool.call(decode(call.arguments, type=tool.args))
+        except Exception as error:  # noqa: BLE001 工具的任何失败都交还给模型
+            return Returned(message=ToolMessage(call_id=call.id, content=f"{type(error).__name__}: {error}", is_error=True))
+
+        return Returned(message=ToolMessage(call_id=call.id, content=content))

@@ -47,7 +47,7 @@ async def test_agent_reads_a_file_before_answering(tmp_path: Path) -> None:
     note.write_text("明天下午三点开会", encoding="utf-8")
     tape = MemTape(Label(name="chat", created_at=time.time()))
 
-    async for _ in await Head(ReadsThenAnswers(), [read_file]).run(tape, f"读一下 {note}"):
+    async for _ in Head(ReadsThenAnswers(), [read_file]).run(tape, f"读一下 {note}"):
         pass
 
     messages = play(await tape.read()).messages
@@ -71,7 +71,7 @@ async def test_a_failing_tool_is_reported_to_the_model(tmp_path: Path) -> None:
 
     tape = MemTape(Label(name="chat", created_at=time.time()))
 
-    async for _ in await Head(ReadsThenAnswers(), [read_file]).run(tape, f"读一下 {tmp_path / 'missing.txt'}"):
+    async for _ in Head(ReadsThenAnswers(), [read_file]).run(tape, f"读一下 {tmp_path / 'missing.txt'}"):
         pass
 
     events = [frame.event for frame in await tape.read()]
@@ -103,7 +103,7 @@ async def test_a_model_stuck_on_tools_is_stopped() -> None:
     tape = MemTape(Label(name="chat", created_at=time.time()))
 
     async def drain() -> None:
-        async for _ in await Head(NeverSatisfied(), [ping], max_steps=3).run(tape, "ping 到天荒地老"):
+        async for _ in Head(NeverSatisfied(), [ping], max_steps=3).run(tape, "ping 到天荒地老"):
             pass
 
     await asyncio.wait_for(drain(), timeout=5)

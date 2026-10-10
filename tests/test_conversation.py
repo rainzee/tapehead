@@ -34,9 +34,9 @@ async def test_second_turn_remembers_the_first() -> None:
     tape = MemTape(Label(name="chat", created_at=time.time()))
     head = Head(ForgetfulProvider())
 
-    async for _ in await head.run(tape, "我叫小明"):
+    async for _ in head.run(tape, "我叫小明"):
         pass
-    async for _ in await head.run(tape, "我叫什么"):
+    async for _ in head.run(tape, "我叫什么"):
         pass
 
     assert play(await tape.read()).messages == [
@@ -53,12 +53,12 @@ async def test_conversation_survives_a_restart(tmp_path: Path) -> None:
 
     silo = FsSilo(tmp_path)
     tape = await silo.create(Label(name="chat", created_at=time.time()))
-    async for _ in await Head(ForgetfulProvider()).run(tape, "我叫小明"):
+    async for _ in Head(ForgetfulProvider()).run(tape, "我叫小明"):
         pass
     await tape.close()
 
     tape = await FsSilo(tmp_path).open("chat")
-    async for _ in await Head(ForgetfulProvider()).run(tape, "我叫什么"):
+    async for _ in Head(ForgetfulProvider()).run(tape, "我叫什么"):
         pass
     await tape.close()
 

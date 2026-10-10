@@ -52,9 +52,9 @@ async def test_every_model_call_can_be_replayed_from_the_tape() -> None:
     head = Head(provider, [lookup], system_prompt="你是天气助手")
 
     with pytest.raises(ConnectionError):
-        async for _ in await head.run(tape, "杭州天气"):
+        async for _ in head.run(tape, "杭州天气"):
             pass
-    async for _ in await head.run(tape, "杭州天气"):
+    async for _ in head.run(tape, "杭州天气"):
         pass
 
     frames = await tape.read()
