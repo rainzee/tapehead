@@ -7,6 +7,7 @@ from msgspec.json import Decoder
 
 from tapehead.delta import Delta, ReasoningDelta, TextDelta, UsageDelta
 from tapehead.message import AssistantMessage, Message, SystemMessage, ToolMessage, UserMessage
+from tapehead.provider import ContextOverflow
 from tapehead.tool import ToolSpec
 
 
@@ -43,6 +44,17 @@ class Chunk(Struct):
 
     choices: list[Choice] = []
     usage: ChunkUsage | None = None
+
+
+def overflowed(status: int, body: str) -> bool:
+    """服务端是否明确报告输入超出上下文窗口, OpenAI 给出 context_length_exceeded, vLLM 给出 maximum context length
+
+    参数
+    - status: HTTP 状态码
+    - body: 响应体
+    """
+
+    return status == 400 and ("context_length_exceeded" in body or "maximum context length" in body)
 
 
 class OpenAIProvider:
@@ -86,7 +98,10 @@ class OpenAIProvider:
             ) as response,
         ):
             if response.status_code >= 400:
-                raise RuntimeError(f"{response.status_code}: {(await response.aread()).decode()}")
+                body = (await response.aread()).decode()
+                if overflowed(response.status_code, body):
+                    raise ContextOverflow(body)
+                raise RuntimeError(f"{response.status_code}: {body}")
             async for line in response.aiter_lines():
                 if not line.startswith("data:"):
                     continue
