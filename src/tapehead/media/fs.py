@@ -20,12 +20,20 @@ def read_label(path: Path) -> Label:
 
 
 class FsTape(MemTape):
-    """文件磁带 JSONL"""
+    """文件磁带 JSONL, 每帧一行, 以换行结尾
+
+    最后一行没有换行, 说明写到一半时进程崩溃, 这一帧从未落带, 打开时截掉
+    """
 
     def __init__(self, label: Label, frames_path: Path) -> None:
         super().__init__(label)
+        data = frames_path.read_bytes()
+        complete = data[: data.rfind(b"\n") + 1]
+        if len(complete) < len(data):
+            with frames_path.open("r+b") as file:
+                file.truncate(len(complete))
         decoder = Decoder(Frame)
-        self.frames = [decoder.decode(line) for line in frames_path.read_bytes().splitlines()]
+        self.frames = [decoder.decode(line) for line in complete.splitlines()]
         self.file = frames_path.open("ab")
 
     async def record(self, *events: Event) -> list[Frame]:

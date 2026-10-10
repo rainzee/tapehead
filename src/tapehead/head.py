@@ -28,6 +28,7 @@ class Head:
     """磁头, 回放磁带得出上下文, 驱动模型并把结果录回磁带
 
     模型的输入只经由 play 从磁带得出, 不在 play 之外加工
+    执行工具前和一轮结束时 flush, 工具的副作用发生时 Dispatched 必已落盘
     """
 
     def __init__(
@@ -83,6 +84,7 @@ class Head:
                 failed = Aborted(stream=stream, error=f"{type(error).__name__}: {error}")
                 for frame in await tape.record(failed, Yielded(reason="failed")):
                     yield frame
+                await tape.flush()
                 raise
 
             message = settle(stream)
@@ -93,6 +95,7 @@ class Head:
             for call in calls:
                 for frame in await tape.record(Dispatched(call_id=call.id)):
                     yield frame
+                await tape.flush()
                 for frame in await tape.record(await self.execute(call)):
                     yield frame
 
@@ -102,6 +105,7 @@ class Head:
 
         for frame in await tape.record(Yielded(reason=reason)):
             yield frame
+        await tape.flush()
 
     async def execute(self, call: ToolCall) -> Returned:
         """执行一次工具调用, 工具不存在, 参数不合法, 执行失败都作为出错的结果交还给模型
