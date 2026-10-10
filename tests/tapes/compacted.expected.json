@@ -1,0 +1,56 @@
+{
+  "messages": [
+    {
+      "role": "system",
+      "content": "你是天气助手"
+    },
+    {
+      "role": "user",
+      "content": "之前的对话摘要: 查过杭州天气, 晴"
+    },
+    {
+      "role": "user",
+      "content": "上海呢"
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "tool_calls": [
+        {
+          "id": "call-6",
+          "name": "lookup",
+          "arguments": "{\"city\": \"\\u4e0a\\u6d77\"}"
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "call_id": "call-6",
+      "content": "上海: 晴",
+      "is_error": false
+    },
+    {
+      "role": "assistant",
+      "content": "上海: 晴",
+      "tool_calls": []
+    }
+  ],
+  "tools": [
+    {
+      "name": "lookup",
+      "description": "查询城市天气",
+      "parameters": {
+        "title": "lookup",
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "city"
+        ]
+      }
+    }
+  ]
+}

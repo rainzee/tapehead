@@ -110,14 +110,18 @@ GOLDEN = Path(__file__).parent / "tapes"
 
 
 @pytest.mark.asyncio
-async def test_a_recorded_tape_still_plays_the_same(tmp_path: Path) -> None:
-    """录好的样本磁带用当前代码回放, 得出的上下文和录制时一致, 投影规则一变就会在这里暴露"""
+@pytest.mark.parametrize("name", ["weather", "compacted"])
+async def test_a_recorded_tape_still_plays_the_same(tmp_path: Path, name: str) -> None:
+    """录好的样本磁带用当前代码回放, 得出的上下文和录制时一致, 投影规则一变就会在这里暴露
 
-    for file in GOLDEN.glob("weather.*"):
+    weather 有一次失败的调用和工具调用, compacted 在一轮中途溢出后压缩, 保留了这一轮的工具调用
+    """
+
+    for file in GOLDEN.glob(f"{name}.*"):
         shutil.copy(file, tmp_path)
-    tape = await FsSilo(tmp_path).open("weather")
+    tape = await FsSilo(tmp_path).open(name)
 
-    assert to_builtins(play(await tape.read())) == json.loads((tmp_path / "weather.expected.json").read_text(encoding="utf-8"))
+    assert to_builtins(play(await tape.read())) == json.loads((tmp_path / f"{name}.expected.json").read_text(encoding="utf-8"))
     await tape.close()
 
 

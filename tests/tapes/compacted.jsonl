@@ -1,0 +1,15 @@
+{"recorded_at":1791627731.5487978,"event":{"type":"configured","message":{"role":"system","content":"你是天气助手"},"tools":[{"name":"lookup","description":"查询城市天气","parameters":{"title":"lookup","type":"object","properties":{"city":{"type":"string"}},"required":["city"]}}]}}
+{"recorded_at":1791627731.5487978,"event":{"type":"prompted","message":{"role":"user","content":"杭州天气"}}}
+{"recorded_at":1791627731.5488846,"event":{"type":"generated","stream":[{"type":"tool_call","id":"call-2","name":"lookup","arguments":"{\"city\": \"\\u676d\\u5dde\"}"},{"type":"usage","input_tokens":20,"output_tokens":2,"cached_tokens":0}],"message":{"role":"assistant","content":"","tool_calls":[{"id":"call-2","name":"lookup","arguments":"{\"city\": \"\\u676d\\u5dde\"}"}]}}}
+{"recorded_at":1791627731.5488913,"event":{"type":"dispatched","call_id":"call-2"}}
+{"recorded_at":1791627731.5679834,"event":{"type":"returned","message":{"role":"tool","call_id":"call-2","content":"杭州: 晴","is_error":false}}}
+{"recorded_at":1791627731.5680494,"event":{"type":"generated","stream":[{"type":"text","text":"杭州: 晴"},{"type":"usage","input_tokens":40,"output_tokens":2,"cached_tokens":0}],"message":{"role":"assistant","content":"杭州: 晴","tool_calls":[]}}}
+{"recorded_at":1791627731.5680554,"event":{"type":"yielded","reason":"completed"}}
+{"recorded_at":1791627731.5714078,"event":{"type":"prompted","message":{"role":"user","content":"上海呢"}}}
+{"recorded_at":1791627731.5714726,"event":{"type":"generated","stream":[{"type":"tool_call","id":"call-6","name":"lookup","arguments":"{\"city\": \"\\u4e0a\\u6d77\"}"},{"type":"usage","input_tokens":60,"output_tokens":2,"cached_tokens":0}],"message":{"role":"assistant","content":"","tool_calls":[{"id":"call-6","name":"lookup","arguments":"{\"city\": \"\\u4e0a\\u6d77\"}"}]}}}
+{"recorded_at":1791627731.5714793,"event":{"type":"dispatched","call_id":"call-6"}}
+{"recorded_at":1791627731.5760138,"event":{"type":"returned","message":{"role":"tool","call_id":"call-6","content":"上海: 晴","is_error":false}}}
+{"recorded_at":1791627731.5760925,"event":{"type":"aborted","stream":[],"error":"ContextOverflow: maximum context length"}}
+{"recorded_at":1791627731.5761569,"event":{"type":"compacted","start":7,"message":{"role":"user","content":"之前的对话摘要: 查过杭州天气, 晴"}}}
+{"recorded_at":1791627731.5761867,"event":{"type":"generated","stream":[{"type":"text","text":"上海: 晴"},{"type":"usage","input_tokens":50,"output_tokens":2,"cached_tokens":0}],"message":{"role":"assistant","content":"上海: 晴","tool_calls":[]}}}
+{"recorded_at":1791627731.5761938,"event":{"type":"yielded","reason":"completed"}}

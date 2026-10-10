@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Any, Literal
+from typing import Literal
 
 from msgspec import Struct
 
@@ -79,12 +79,14 @@ class Yielded(Struct, tag="yielded"):
     reason: YieldReason
 
 
-class Anchored(Struct, tag="anchored"):
-    """打下回放起点, message 是代替之前全部历史的摘要"""
+class Compacted(Struct, tag="compacted"):
+    """位置 start 之前的历史由摘要 message 代替, 已录的帧不变, 只改变回放
 
-    name: str
-    message: UserMessage | None = None
-    state: dict[str, Any] = {}
+    message 必须能独立代替 [0, start) 的全部历史, 包括之前的摘要, 是与模型提供方无关的纯文本
+    """
+
+    start: int
+    message: UserMessage
 
 
-type Event = Configured | Prompted | Generated | Aborted | Dispatched | Returned | Yielded | Anchored
+type Event = Configured | Prompted | Generated | Aborted | Dispatched | Returned | Yielded | Compacted
