@@ -12,4 +12,4 @@
   名字取自录音机的磁头: 录制时写带, 回放时读带
 </p>
 
-<p align="center"><a href="docs/concepts">Concepts</a></p>
+<p align="center"><a href="docs/concepts/README.md">Concepts</a></p>
