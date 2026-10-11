@@ -5,12 +5,12 @@ import typing
 from collections.abc import Callable
 from typing import Any, overload
 
-from msgspec import Struct, defstruct
+from msgspec import Struct, defstruct, structs
 from msgspec.json import encode, schema_components
 
 
 def derive_parameters(func: Callable, name: str) -> type[Struct]:
-    """从函数签名生成参数 Struct 类型注解里的 Annotated 元数据原样保留"""
+    """从函数签名生成参数 Struct, 类型注解里的 Annotated 元数据原样保留"""
 
     hints = typing.get_type_hints(func, include_extras=True)
     fields = []
@@ -68,8 +68,7 @@ class Tool:
         """
 
         if self.spread:
-            fields = self.parameters.__struct_fields__
-            run = functools.partial(self.func, **{field: getattr(arguments, field) for field in fields})
+            run = functools.partial(self.func, **structs.asdict(arguments))
         else:
             run = functools.partial(self.func, arguments)
         result = await run() if inspect.iscoroutinefunction(self.func) else await asyncio.to_thread(run)
