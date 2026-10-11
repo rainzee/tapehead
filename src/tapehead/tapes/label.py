@@ -2,7 +2,7 @@ from msgspec import Struct
 
 
 class Label(Struct):
-    """磁带标签, 一盘磁带的元信息, 与帧分开存放, 不参与回放"""
+    """磁带标签, 创建时写定, 此后不变, 不读帧即可得到"""
 
     name: str
     created_at: float

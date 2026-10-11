@@ -78,6 +78,27 @@ async def test_a_frame_cut_off_mid_write_does_not_lose_the_tape(tmp_path: Path) 
     await tape.close()
 
 
+@pytest.mark.asyncio
+async def test_a_tape_cut_off_after_its_label_opens_empty(tmp_path: Path) -> None:
+    """建带时写完标签还没建帧文件就崩溃, 标签在即带在, 重新打开是一盘空带, 还能接着录"""
+
+    silo = FsSilo(tmp_path)
+    tape = await silo.create(Label(name="chat", created_at=time.time()))
+    await tape.close()
+    (tmp_path / "chat.jsonl").unlink()
+
+    assert [label.name for label in await silo.list()] == ["chat"]
+    tape = await silo.open("chat")
+    assert await tape.read() == []
+    async for _ in Head(Gateway()).run(tape, "你好"):
+        pass
+    await tape.close()
+
+    tape = await silo.open("chat")
+    assert [type(frame.event).__name__ for frame in await tape.read()][-2:] == ["Generated", "Yielded"]
+    await tape.close()
+
+
 class Watched(MemTape):
     """记下每次 flush 时已经录了多少帧"""
 
