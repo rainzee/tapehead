@@ -9,15 +9,18 @@ from msgspec import Struct, defstruct
 from msgspec.json import encode, schema_components
 
 
-def derive_args(func: Callable, name: str) -> type[Struct]:
+def derive_parameters(func: Callable, name: str) -> type[Struct]:
     """从函数签名生成参数 Struct 类型注解里的 Annotated 元数据原样保留"""
 
     hints = typing.get_type_hints(func, include_extras=True)
     fields = []
 
-    for param in inspect.signature(func).parameters.values():
-        annotation = hints.get(param.name, Any)
-        fields.append((param.name, annotation) if param.default is param.empty else (param.name, annotation, param.default))
+    for parameter in inspect.signature(func).parameters.values():
+        annotation = hints.get(parameter.name, Any)
+        if parameter.default is parameter.empty:
+            fields.append((parameter.name, annotation))
+        else:
+            fields.append((parameter.name, annotation, parameter.default))
 
     return defstruct(name, fields)
 
@@ -44,30 +47,31 @@ class Tool:
         self.name = name or func.__name__  # ty: ignore[unresolved-attribute]
         self.description = description if description is not None else (inspect.getdoc(func) or "")
         self.spread = parameters is None
-        self.args = derive_args(func, self.name) if parameters is None else parameters
+        self.parameters = derive_parameters(func, self.name) if parameters is None else parameters
 
     @property
     def spec(self) -> ToolSpec:
         """给模型看的工具定义, 参数 schema 由参数 Struct 生成"""
 
-        (ref,), components = schema_components([self.args], ref_template="#/$defs/{name}")
-        parameters = components.pop(ref["$ref"].removeprefix("#/$defs/"))
+        (ref,), components = schema_components([self.parameters], ref_template="#/$defs/{name}")
+        schema = components.pop(ref["$ref"].removeprefix("#/$defs/"))
         if components:
-            parameters["$defs"] = components
+            schema["$defs"] = components
 
-        return ToolSpec(name=self.name, description=self.description, parameters=parameters)
+        return ToolSpec(name=self.name, description=self.description, parameters=schema)
 
-    async def call(self, args: Struct) -> str:
+    async def call(self, arguments: Struct) -> str:
         """执行一次调用, 返回给模型看的结果, 失败时直接抛异常
 
         参数
-        - args: 已经校验过的参数
+        - arguments: 已经校验过的实参
         """
 
         if self.spread:
-            run = functools.partial(self.func, **{field: getattr(args, field) for field in self.args.__struct_fields__})
+            fields = self.parameters.__struct_fields__
+            run = functools.partial(self.func, **{field: getattr(arguments, field) for field in fields})
         else:
-            run = functools.partial(self.func, args)
+            run = functools.partial(self.func, arguments)
         result = await run() if inspect.iscoroutinefunction(self.func) else await asyncio.to_thread(run)
 
         return result if isinstance(result, str) else encode(result).decode()

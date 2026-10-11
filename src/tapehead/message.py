@@ -2,7 +2,7 @@ from msgspec import Struct
 
 
 class ToolCall(Struct):
-    """工具调用"""
+    """模型发起的工具调用请求"""
 
     id: str
     name: str

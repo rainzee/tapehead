@@ -158,7 +158,7 @@ class Head:
             return Returned(message=ToolMessage(call_id=call.id, content=f"未知工具: {call.name}", is_error=True))
 
         try:
-            content = await tool.call(decode(call.arguments, type=tool.args))
+            content = await tool.call(decode(call.arguments, type=tool.parameters))
         except Exception as error:  # noqa: BLE001 工具的任何失败都交还给模型
             return Returned(message=ToolMessage(call_id=call.id, content=f"{type(error).__name__}: {error}", is_error=True))
 
