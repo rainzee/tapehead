@@ -11,3 +11,5 @@
   基于 Tape 的 agent 框架<br>
   名字取自录音机的磁头: 录制时写带, 回放时读带
 </p>
+
+<p align="center"><a href="docs/concepts">Concepts</a></p>
