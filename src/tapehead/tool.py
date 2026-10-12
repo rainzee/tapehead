@@ -1,9 +1,8 @@
 import asyncio
 import functools
 import inspect
-import typing
 from collections.abc import Callable
-from typing import Any, overload
+from typing import Any, get_type_hints, overload
 
 from msgspec import Struct, defstruct, structs
 from msgspec.json import encode, schema_components
@@ -12,7 +11,7 @@ from msgspec.json import encode, schema_components
 def derive_parameters(func: Callable, name: str) -> type[Struct]:
     """从函数签名生成参数 Struct, 类型注解里的 Annotated 元数据原样保留"""
 
-    hints = typing.get_type_hints(func, include_extras=True)
+    hints = get_type_hints(func, include_extras=True)
     fields = []
 
     for parameter in inspect.signature(func).parameters.values():
