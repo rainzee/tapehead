@@ -11,6 +11,7 @@ from tapehead.media.fs import FsSilo
 from tapehead.media.mem import MemTape
 from tapehead.message import AssistantMessage, Message, ToolMessage
 from tapehead.tapes.label import Label
+from tapehead.testing import ScriptedProvider
 from tapehead.tool import ToolSpec, tool
 
 
@@ -124,14 +125,9 @@ async def test_a_tool_runs_only_after_its_dispatch_is_durable() -> None:
         seen.append(list(tape.flushed))
         return "pong"
 
-    class Pings:
-        async def stream(self, messages: list[Message], tools: Sequence[ToolSpec]) -> AsyncIterator[Delta]:
-            if isinstance(messages[-1], ToolMessage):
-                yield TextDelta(text="通")
-            else:
-                yield ToolCallDelta(id="call-1", name="ping", arguments="{}")
+    provider = ScriptedProvider([ToolCallDelta(id="call-1", name="ping", arguments="{}")], [TextDelta(text="通")])
 
-    async for _ in Head(Pings(), [ping]).run(tape, "ping"):
+    async for _ in Head(provider, [ping]).run(tape, "ping"):
         pass
 
     frames = await tape.read()
