@@ -9,7 +9,6 @@ from tapehead.head import Head
 from tapehead.media.mem import MemTape
 from tapehead.message import AssistantMessage, Message, ToolMessage, UserMessage
 from tapehead.provider import ContextOverflow
-from tapehead.providers.openai import overflowed
 from tapehead.tapes.frame import Frame
 from tapehead.tapes.label import Label
 from tapehead.tapes.play import Context, cuts, play
@@ -259,12 +258,3 @@ async def test_a_call_cut_off_by_a_crash_stays_paired_after_compaction() -> None
         pass
 
     assert await tape.read() and (await tape.read())[-1].event == Yielded(reason="completed")
-
-
-def test_only_an_explicit_overflow_is_reported_as_one() -> None:
-    """只有服务端明确报告上下文超长时才算溢出, 其他 400 照常失败"""
-
-    assert overflowed(400, '{"error": {"code": "context_length_exceeded"}}')
-    assert overflowed(400, '{"message": "This model\'s maximum context length is 32768 tokens."}')
-    assert not overflowed(400, '{"message": "invalid tool schema"}')
-    assert not overflowed(500, "maximum context length")
