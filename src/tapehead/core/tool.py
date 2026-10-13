@@ -9,7 +9,6 @@ class ToolDefinition(Struct):
     name: str
     description: str
     parameters: dict[str, Any]
-    """参数的 JSON Schema"""
 
 
 class Tool(Protocol):
