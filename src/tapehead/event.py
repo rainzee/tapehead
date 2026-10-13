@@ -89,4 +89,15 @@ class Compacted(Struct, tag="compacted"):
     message: UserMessage
 
 
-type Event = Configured | Prompted | Generated | Aborted | Dispatched | Returned | Yielded | Compacted
+class Pruned(Struct, tag="pruned"):
+    """位置 target 上的工具结果在之后的回放里由 message 代替, 已录的帧不变, 只改变回放
+
+    target 必须是当前压缩之后的 Returned, message 与它的 call_id 一致, 调用与结果的配对因此不变,
+    同一位置被多次裁剪时以最后一次为准
+    """
+
+    target: int
+    message: ToolMessage
+
+
+type Event = Configured | Prompted | Generated | Aborted | Dispatched | Returned | Yielded | Compacted | Pruned

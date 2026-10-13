@@ -12,6 +12,7 @@ from tapehead.event import (
     Event,
     Generated,
     Prompted,
+    Pruned,
     Returned,
     Yielded,
     settle,
@@ -100,6 +101,7 @@ def sample_events() -> list[Event]:
         Generated(stream=answering, message=settle(answering)),
         Yielded(reason="completed"),
         Compacted(start=1, message=UserMessage(content="之前的对话摘要: 问过杭州天气")),
+        Pruned(target=5, message=ToolMessage(call_id="call-1", content="[已裁剪]")),
     ]
 
 
@@ -185,7 +187,7 @@ async def check_recording_time(medium: Medium) -> None:
 
 
 async def check_events_round_trip(medium: Medium) -> None:
-    """每一类事件, 包括 Generated 的增量流和 Compacted, 录入后关带重开读回都与原来相等
+    """每一类事件, 包括 Generated 的增量流, Compacted 和 Pruned, 录入后关带重开读回都与原来相等
 
     参数
     - medium: 待检查的介质

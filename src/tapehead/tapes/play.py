@@ -2,7 +2,7 @@ from collections.abc import Sequence
 
 from msgspec import Struct
 
-from tapehead.event import Compacted, Configured, Dispatched, Event, Generated, Prompted, Returned, Yielded
+from tapehead.event import Compacted, Configured, Dispatched, Event, Generated, Prompted, Pruned, Returned, Yielded
 from tapehead.message import Message, ToolMessage
 from tapehead.tapes.frame import Frame
 from tapehead.tool import ToolSpec
@@ -62,24 +62,38 @@ def cuts(frames: Sequence[Frame]) -> list[int]:
     return found
 
 
-def admit(frames: Sequence[Frame], compacted: Compacted) -> None:
-    """校验一次压缩能否落在这盘带的末尾, 切点不在 cuts 里时拒绝
+def admit(frames: Sequence[Frame], edit: Compacted | Pruned) -> None:
+    """校验一次视图编辑能否落在这盘带的末尾, 不合法时拒绝
+
+    压缩的切点必须在 cuts 里, 裁剪的目标必须是当前压缩之后的 Returned, 且 call_id 一致
 
     参数
-    - frames: 按位置排列的帧, 压缩将追加在它们之后
-    - compacted: 待提交的压缩
+    - frames: 按位置排列的帧, 编辑将追加在它们之后
+    - edit: 待提交的压缩或裁剪
     """
 
-    if compacted.start not in cuts(frames):
-        raise ValueError(f"切点 {compacted.start} 不合法, 可以压缩到的位置是 {cuts(frames)}")
+    match edit:
+        case Compacted(start=start) if start not in cuts(frames):
+            raise ValueError(f"切点 {start} 不合法, 可以压缩到的位置是 {cuts(frames)}")
+        case Pruned(target=target, message=message):
+            current = compaction(frames)
+            floor = current.start if current is not None else 0
+            if not floor <= target < len(frames):
+                raise ValueError(f"裁剪目标 {target} 不在当前回放的范围 [{floor}, {len(frames)}) 里")
+            event = frames[target].event
+            if not isinstance(event, Returned):
+                raise ValueError(f"裁剪目标 {target} 是 {type(event).__name__}, 只能裁剪 Returned")  # noqa: TRY004 错的是目标位置, 不是类型
+            if event.message.call_id != message.call_id:
+                raise ValueError(f"裁剪的 call_id {message.call_id} 与目标的 {event.message.call_id} 不一致")
 
 
 def play(frames: Sequence[Frame]) -> Context:
     """把帧投影成模型调用的输入, 每个 Generated 和 Aborted 的输入都等于它之前的前缀的投影
 
-    带 message 的事件进入上下文, 不带的只记账
+    Prompted, Generated, Returned 的消息进入上下文, Configured, Compacted, Pruned 改变回放, 其余只记账
     配置取前缀里最后一个 Configured, 系统提示始终在最前, 不受压缩影响
-    有压缩时, 摘要紧跟系统提示, 之后是从切点起原样保留的消息
+    有压缩时, 摘要紧跟系统提示, 之后是从切点起保留的消息
+    被裁剪的工具结果换成最后一次裁剪给出的消息
 
     参数
     - frames: 按位置排列的帧
@@ -93,10 +107,15 @@ def play(frames: Sequence[Frame]) -> Context:
     if compacted is not None:
         messages.append(compacted.message)
 
-    for frame in frames[compacted.start if compacted is not None else 0 :]:
+    pruned = {frame.event.target: frame.event.message for frame in frames if isinstance(frame.event, Pruned)}
+    start = compacted.start if compacted is not None else 0
+
+    for i, frame in enumerate(frames[start:], start):
         match frame.event:
-            case Prompted(message=message) | Generated(message=message) | Returned(message=message):
+            case Prompted(message=message) | Generated(message=message):
                 messages.append(message)
+            case Returned(message=message):
+                messages.append(pruned.get(i, message))
 
     return Context(messages=messages, tools=configured.tools if configured is not None else [])
 

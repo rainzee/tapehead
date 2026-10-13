@@ -11,6 +11,7 @@ from tapehead.event import (
     Event,
     Generated,
     Prompted,
+    Pruned,
     Returned,
     Yielded,
     YieldReason,
@@ -34,7 +35,7 @@ class Head:
     模型的输入只经由 play 从磁带得出, 不在 play 之外加工
     执行工具前后和一轮结束时 flush, 工具的副作用发生时 Dispatched 必已落盘, 它的结果录下即落盘
     从读取前缀发起一次模型调用, 到它的 Generated 或 Aborted 落带, 之间不提交改变上下文的事件,
-    所以同一盘带同一时刻只能有一个 run 或 compact 在进行, 这由宿主保证
+    所以同一盘带同一时刻只能有一个 run, compact 或 prune 在进行, 这由宿主保证
     """
 
     def __init__(
@@ -143,6 +144,22 @@ class Head:
 
         admit(await tape.read(), compacted)
         recorded = await tape.record(compacted)
+        await tape.flush()
+
+        return recorded
+
+    async def prune(self, tape: Tape, *pruned: Pruned) -> list[Frame]:
+        """在两轮之间裁剪工具结果, 全部校验通过后一起落带, 宿主在这盘带上没有 run 进行时调用
+
+        参数
+        - tape: 磁带
+        - pruned: 宿主挑好目标并写好替换消息的裁剪
+        """
+
+        frames = await tape.read()
+        for edit in pruned:
+            admit(frames, edit)
+        recorded = await tape.record(*pruned)
         await tape.flush()
 
         return recorded

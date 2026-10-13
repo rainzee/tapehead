@@ -1,0 +1,61 @@
+{
+  "messages": [
+    {
+      "role": "system",
+      "content": "你是运维助手"
+    },
+    {
+      "role": "user",
+      "content": "日志里最常见的 timeout 路径"
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "tool_calls": [
+        {
+          "id": "call-1",
+          "name": "grep_logs",
+          "arguments": "{\"pattern\": \"timeout\"}"
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "call_id": "call-1",
+      "content": "[已裁剪] 20 行 timeout 日志, 路径都是 /api/orders",
+      "is_error": false
+    },
+    {
+      "role": "assistant",
+      "content": "最常见的是 /api/orders",
+      "tool_calls": []
+    },
+    {
+      "role": "user",
+      "content": "确定吗"
+    },
+    {
+      "role": "assistant",
+      "content": "是的, 20 条全是 /api/orders",
+      "tool_calls": []
+    }
+  ],
+  "tools": [
+    {
+      "name": "grep_logs",
+      "description": "在服务日志里搜索包含 pattern 的行",
+      "parameters": {
+        "title": "grep_logs",
+        "type": "object",
+        "properties": {
+          "pattern": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "pattern"
+        ]
+      }
+    }
+  ]
+}
