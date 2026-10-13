@@ -3,8 +3,8 @@ import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 
-from tapehead.delta import Delta, ReasoningDelta, TextDelta, ToolCallDelta, UsageDelta
-from tapehead.event import (
+from tapehead.core.delta import Delta, ReasoningDelta, TextDelta, ToolCallDelta, UsageDelta
+from tapehead.core.event import (
     Aborted,
     Compacted,
     Configured,
@@ -17,12 +17,9 @@ from tapehead.event import (
     Yielded,
     settle,
 )
-from tapehead.message import SystemMessage, ToolMessage, UserMessage
-from tapehead.tapes.frame import Frame
-from tapehead.tapes.label import Label
-from tapehead.tapes.silo import Silo
-from tapehead.tapes.tape import Tape
-from tapehead.tool import ToolSpec
+from tapehead.core.message import SystemMessage, ToolMessage, UserMessage
+from tapehead.core.tape import Frame, Label, Silo, Tape
+from tapehead.core.tool import ToolSpec
 
 
 @dataclass(frozen=True)

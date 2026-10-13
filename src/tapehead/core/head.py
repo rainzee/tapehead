@@ -1,13 +1,11 @@
 from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
 
-from msgspec.json import decode
-
-from tapehead.delta import Delta
-from tapehead.event import (
+from tapehead.core.delta import Delta
+from tapehead.core.event import (
     Aborted,
-    Compacted,
     Configured,
     Dispatched,
+    Edit,
     Event,
     Generated,
     Prompted,
@@ -17,16 +15,14 @@ from tapehead.event import (
     YieldReason,
     settle,
 )
-from tapehead.message import SystemMessage, ToolCall, ToolMessage, UserMessage
-from tapehead.provider import ContextOverflow, Provider
-from tapehead.skill import Skill, render_skills, skill_tool
-from tapehead.stream import StreamItem
-from tapehead.tapes.frame import Frame
-from tapehead.tapes.play import admit, configuration, mend, play
-from tapehead.tapes.tape import Tape
-from tapehead.tool import Tool
+from tapehead.core.message import SystemMessage, ToolCall, ToolMessage, UserMessage
+from tapehead.core.play import admit, configuration, mend, play
+from tapehead.core.provider import ContextOverflow, Provider
+from tapehead.core.tape import Frame, Tape
+from tapehead.core.tool import Tool
 
-type Compactor = Callable[[list[Frame]], Awaitable[list[Compacted | Pruned]]]
+type StreamItem = Frame | Delta
+type Compactor = Callable[[list[Frame]], Awaitable[list[Edit]]]
 type Pruner = Callable[[ToolMessage], Awaitable[str | None]]
 
 
@@ -36,7 +32,7 @@ class Head:
     模型的输入只经由 play 从磁带得出, 不在 play 之外加工
     执行工具前后和一轮结束时 flush, 工具的副作用发生时 Dispatched 必已落盘, 它的结果录下即落盘
     从读取前缀发起一次模型调用, 到它的 Generated 或 Aborted 落带, 之间不提交改变上下文的事件,
-    所以同一盘带同一时刻只能有一个 run, compact 或 prune 在进行, 这由宿主保证
+    所以同一盘带同一时刻只能有一个 run 或 edit 在进行, 这由宿主保证
     """
 
     def __init__(
@@ -44,7 +40,6 @@ class Head:
         provider: Provider,
         tools: Sequence[Tool] = (),
         system_prompt: str = "",
-        skills: Sequence[Skill] = (),
         max_steps: int = 50,
         pruner: Pruner | None = None,
         compactor: Compactor | None = None,
@@ -52,9 +47,8 @@ class Head:
         """
         参数
         - provider: 模型提供方
-        - tools: 可用的工具
+        - tools: 可用的工具, 模型按名字调用, 不能重名
         - system_prompt: 系统提示, 和工具定义一起作为 Configured 落带, 只在变化时写
-        - skills: 可用的技能, 目录并入系统提示, 同时多出一个加载正文的 skill 工具
         - max_steps: 单轮最多被接纳的模型调用次数
         - pruner: 每个工具结果录下后交给它, 返回替换的内容时紧接着录一条 Pruned, 模型从不会看到原文,
           返回 None 时原样保留, 替换的内容要交代省略了什么
@@ -63,11 +57,13 @@ class Head:
         """
 
         self.provider = provider
-        self.tools = [*tools, *([skill_tool(skills)] if skills else [])]
-        self.configured = Configured(
-            message=SystemMessage(content="\n\n".join(part for part in (system_prompt, render_skills(skills)) if part)),
-            tools=[tool.spec for tool in self.tools],
-        )
+        specs = [tool.spec for tool in tools]
+        names = [spec.name for spec in specs]
+        if duplicated := sorted({name for name in names if names.count(name) > 1}):
+            raise ValueError(f"工具重名: {', '.join(duplicated)}")
+
+        self.tools = dict(zip(names, tools, strict=True))
+        self.configured = Configured(message=SystemMessage(content=system_prompt), tools=specs)
         self.max_steps = max_steps
         self.pruner = pruner
         self.compactor = compactor
@@ -131,8 +127,8 @@ class Head:
                 returned = await self.execute(call)
                 results: list[Event] = [returned]
                 if self.pruner is not None and (content := await self.pruner(returned.message)) is not None:
-                    message = ToolMessage(call_id=call.id, content=content, is_error=returned.message.is_error)
-                    results.append(Pruned(target=len(await tape.read()), message=message))
+                    replacement = ToolMessage(call_id=call.id, content=content, is_error=returned.message.is_error)
+                    results.append(Pruned(target=len(await tape.read()), message=replacement))
                 for frame in await tape.record(*results):
                     yield frame
                 await tape.flush()
@@ -145,30 +141,16 @@ class Head:
             yield frame
         await tape.flush()
 
-    async def compact(self, tape: Tape, compacted: Compacted) -> list[Frame]:
-        """在两轮之间压缩, 校验切点后落带, 宿主在这盘带上没有 run 进行时调用
+    async def edit(self, tape: Tape, *edits: Edit) -> list[Frame]:
+        """在两轮之间提交视图编辑, 按顺序全部校验通过后一起落带, 宿主在这盘带上没有 run 进行时调用
 
         参数
         - tape: 磁带
-        - compacted: 宿主从 cuts 里挑了切点并写好摘要的压缩
+        - edits: 宿主写好的压缩或裁剪, 压缩的切点从 cuts 里挑, 裁剪的目标是保留段里的 Returned
         """
 
-        admit(await tape.read(), compacted)
-        recorded = await tape.record(compacted)
-        await tape.flush()
-
-        return recorded
-
-    async def prune(self, tape: Tape, *pruned: Pruned) -> list[Frame]:
-        """在两轮之间裁剪工具结果, 全部校验通过后一起落带, 宿主在这盘带上没有 run 进行时调用
-
-        参数
-        - tape: 磁带
-        - pruned: 宿主挑好目标并写好替换消息的裁剪
-        """
-
-        admit(await tape.read(), *pruned)
-        recorded = await tape.record(*pruned)
+        admit(await tape.read(), *edits)
+        recorded = await tape.record(*edits)
         await tape.flush()
 
         return recorded
@@ -180,12 +162,12 @@ class Head:
         - call: 模型请求的工具调用
         """
 
-        tool = next((tool for tool in self.tools if tool.name == call.name), None)
+        tool = self.tools.get(call.name)
         if tool is None:
             return Returned(message=ToolMessage(call_id=call.id, content=f"未知工具: {call.name}", is_error=True))
 
         try:
-            content = await tool.call(decode(call.arguments, type=tool.parameters))
+            content = await tool.call(call.arguments)
         except Exception as error:  # noqa: BLE001 工具的任何失败都交还给模型
             return Returned(message=ToolMessage(call_id=call.id, content=f"{type(error).__name__}: {error}", is_error=True))
 

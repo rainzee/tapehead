@@ -3,9 +3,9 @@ from typing import Literal
 
 from msgspec import Struct
 
-from tapehead.delta import Delta, ReasoningDelta, TextDelta, ToolCallDelta
-from tapehead.message import AssistantMessage, SystemMessage, ToolCall, ToolMessage, UserMessage
-from tapehead.tool import ToolSpec
+from tapehead.core.delta import Delta, ReasoningDelta, TextDelta, ToolCallDelta
+from tapehead.core.message import AssistantMessage, SystemMessage, ToolCall, ToolMessage, UserMessage
+from tapehead.core.tool import ToolSpec
 
 
 def settle(stream: Sequence[Delta]) -> AssistantMessage:
@@ -100,5 +100,7 @@ class Pruned(Struct, tag="pruned"):
     target: int
     message: ToolMessage
 
+
+type Edit = Compacted | Pruned
 
 type Event = Configured | Prompted | Generated | Aborted | Dispatched | Returned | Yielded | Compacted | Pruned

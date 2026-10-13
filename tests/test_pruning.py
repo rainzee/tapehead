@@ -3,17 +3,17 @@ from collections.abc import AsyncIterator
 
 import pytest
 
-from tapehead.delta import Delta, TextDelta, ToolCallDelta
-from tapehead.event import Aborted, Compacted, Generated, Pruned, Returned, Yielded
-from tapehead.head import Head
+from tapehead.core.delta import Delta, TextDelta, ToolCallDelta
+from tapehead.core.event import Aborted, Compacted, Edit, Generated, Pruned, Returned, Yielded
+from tapehead.core.head import Head
+from tapehead.core.message import Message, ToolMessage, UserMessage
+from tapehead.core.play import Context, cuts, play
+from tapehead.core.provider import ContextOverflow
+from tapehead.core.tape import Frame, Label
+from tapehead.core.tool import ToolSpec
+from tapehead.kit.tool import tool
 from tapehead.media.mem import MemTape
-from tapehead.message import Message, ToolMessage, UserMessage
-from tapehead.provider import ContextOverflow
-from tapehead.tapes.frame import Frame
-from tapehead.tapes.label import Label
-from tapehead.tapes.play import Context, cuts, play
 from tapehead.testing import ScriptedProvider
-from tapehead.tool import ToolSpec, tool
 
 LOG = "timeout path=/api/orders\n" * 200
 
@@ -61,10 +61,10 @@ async def test_the_host_prunes_a_tool_result_between_turns() -> None:
     async for _ in head.run(tape, "日志里最常见的 timeout 路径"):
         pass
     target = returned_at(await tape.read())
-    await head.prune(tape, pruned(target))
+    await head.edit(tape, pruned(target))
     async for _ in head.run(tape, "再确认一下"):
         pass
-    await head.prune(tape, pruned(target, "[已裁剪]"))
+    await head.edit(tape, pruned(target, "[已裁剪]"))
     async for _ in head.run(tape, "好的"):
         pass
 
@@ -93,12 +93,12 @@ async def test_an_illegal_prune_is_refused() -> None:
         (pruned(-1), "不在当前回放的范围"),
     ):
         with pytest.raises(ValueError, match=message):
-            await head.prune(tape, pruned(target), edit)
+            await head.edit(tape, pruned(target), edit)
     assert await tape.read() == frames
 
-    await head.compact(tape, Compacted(start=cuts(frames)[-1], message=UserMessage(content="之前的对话摘要: 查过日志")))
+    await head.edit(tape, Compacted(start=cuts(frames)[-1], message=UserMessage(content="之前的对话摘要: 查过日志")))
     with pytest.raises(ValueError, match="不在当前回放的范围"):
-        await head.prune(tape, pruned(target))
+        await head.edit(tape, pruned(target))
 
 
 @pytest.mark.asyncio
@@ -143,7 +143,7 @@ class Budget:
 async def test_an_overflow_from_one_huge_result_is_rescued_by_pruning() -> None:
     """单个工具结果就超出窗口, 压缩切不掉它, 压缩器改为裁剪它, 这一轮在重试后正常完成, 每次调用仍能精确重放"""
 
-    async def compactor(frames: list[Frame]) -> list[Compacted | Pruned]:
+    async def compactor(frames: list[Frame]) -> list[Edit]:
         return [
             Pruned(target=i, message=ToolMessage(call_id=frame.event.message.call_id, content="[已裁剪] 日志过长"))
             for i, frame in enumerate(frames)

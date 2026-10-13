@@ -5,7 +5,9 @@ from collections.abc import Callable
 from typing import Any, get_type_hints, overload
 
 from msgspec import Struct, defstruct, structs
-from msgspec.json import encode, schema_components
+from msgspec.json import decode, encode, schema_components
+
+from tapehead.core.tool import ToolSpec
 
 
 def derive_parameters(func: Callable, name: str) -> type[Struct]:
@@ -24,16 +26,8 @@ def derive_parameters(func: Callable, name: str) -> type[Struct]:
     return defstruct(name, fields)
 
 
-class ToolSpec(Struct):
-    """模型可见的工具定义"""
-
-    name: str
-    description: str
-    parameters: dict[str, Any]
-
-
-class Tool:
-    """工具对象"""
+class FunctionTool:
+    """由一个函数实现的工具"""
 
     def __init__(
         self,
@@ -59,30 +53,31 @@ class Tool:
 
         return ToolSpec(name=self.name, description=self.description, parameters=schema)
 
-    async def call(self, arguments: Struct) -> str:
-        """执行一次调用, 返回给模型看的结果, 失败时直接抛异常
+    async def call(self, arguments: str) -> str:
+        """按参数 Struct 校验实参后执行函数, 返回值不是 str 时编码成 JSON 文本
 
         参数
-        - arguments: 已经校验过的实参
+        - arguments: 模型给出的 JSON 实参
         """
 
+        parsed = decode(arguments, type=self.parameters)
         if self.spread:
-            run = functools.partial(self.func, **structs.asdict(arguments))
+            run = functools.partial(self.func, **structs.asdict(parsed))
         else:
-            run = functools.partial(self.func, arguments)
+            run = functools.partial(self.func, parsed)
         result = await run() if inspect.iscoroutinefunction(self.func) else await asyncio.to_thread(run)
 
         return result if isinstance(result, str) else encode(result).decode()
 
 
 @overload
-def tool(func: Callable, /) -> Tool: ...
+def tool(func: Callable, /) -> FunctionTool: ...
 
 
 @overload
 def tool(
     *, name: str | None = None, description: str | None = None, parameters: type[Struct] | None = None
-) -> Callable[[Callable], Tool]: ...
+) -> Callable[[Callable], FunctionTool]: ...
 
 
 def tool(
@@ -92,8 +87,8 @@ def tool(
     name: str | None = None,
     description: str | None = None,
     parameters: type[Struct] | None = None,
-) -> Tool | Callable[[Callable], Tool]:
-    """定义工具
+) -> FunctionTool | Callable[[Callable], FunctionTool]:
+    """把函数定义成工具
 
     参数
     - func: 被包装的函数, 同步函数会放到线程里执行, 返回值不是 str 时编码成 JSON 文本
@@ -102,7 +97,7 @@ def tool(
     - parameters: 参数 Struct, 省略时从类型注解推导, 给出时函数接收这个 Struct 的实例
     """
 
-    def wrap(func: Callable) -> Tool:
-        return Tool(func, name, description, parameters)
+    def wrap(func: Callable) -> FunctionTool:
+        return FunctionTool(func, name, description, parameters)
 
     return wrap(func) if func is not None else wrap

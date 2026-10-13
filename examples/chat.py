@@ -31,16 +31,15 @@ from openai.types.chat import (
     ChatCompletionToolParam,
 )
 
-from tapehead.builtin.read import read_tool
-from tapehead.delta import Delta, ReasoningDelta, TextDelta, ToolCallDelta, UsageDelta
-from tapehead.event import Aborted, Generated, Returned, Yielded
-from tapehead.head import Head
+from tapehead.core.delta import Delta, ReasoningDelta, TextDelta, ToolCallDelta, UsageDelta
+from tapehead.core.event import Aborted, Generated, Returned, Yielded
+from tapehead.core.head import Head
+from tapehead.core.message import AssistantMessage, Message, SystemMessage, ToolMessage, UserMessage
+from tapehead.core.provider import ContextOverflow
+from tapehead.core.tape import Frame, Label
+from tapehead.core.tool import ToolSpec
+from tapehead.kit.read import read_tool
 from tapehead.media.fs import FsSilo, FsTape
-from tapehead.message import AssistantMessage, Message, SystemMessage, ToolMessage, UserMessage
-from tapehead.provider import ContextOverflow
-from tapehead.tapes.frame import Frame
-from tapehead.tapes.label import Label
-from tapehead.tool import ToolSpec
 
 DIM, RESET = "\033[2m", "\033[0m"
 
