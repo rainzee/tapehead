@@ -3,7 +3,7 @@ from typing import Literal
 
 from msgspec import Struct
 
-from tapehead.delta import Delta, TextDelta, ToolCallDelta
+from tapehead.delta import Delta, ReasoningDelta, TextDelta, ToolCallDelta
 from tapehead.message import AssistantMessage, SystemMessage, ToolCall, ToolMessage, UserMessage
 from tapehead.tool import ToolSpec
 
@@ -16,6 +16,7 @@ def settle(stream: Sequence[Delta]) -> AssistantMessage:
     """
 
     text = "".join(delta.text for delta in stream if isinstance(delta, TextDelta))
+    reasoning = "".join(delta.text for delta in stream if isinstance(delta, ReasoningDelta))
     calls: dict[str, ToolCall] = {}
 
     for delta in stream:
@@ -24,7 +25,7 @@ def settle(stream: Sequence[Delta]) -> AssistantMessage:
             call.name = delta.name or call.name
             call.arguments += delta.arguments
 
-    return AssistantMessage(content=text, tool_calls=list(calls.values()))
+    return AssistantMessage(content=text, reasoning=reasoning, tool_calls=list(calls.values()))
 
 
 class Configured(Struct, tag="configured"):

@@ -15,6 +15,7 @@
     {
       "role": "assistant",
       "content": "",
+      "reasoning": "",
       "tool_calls": [
         {
           "id": "call-1",
@@ -32,6 +33,7 @@
     {
       "role": "assistant",
       "content": "杭州晴",
+      "reasoning": "",
       "tool_calls": []
     }
   ],

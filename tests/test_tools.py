@@ -7,7 +7,7 @@ from typing import Annotated
 import pytest
 from msgspec import Meta
 
-from tapehead.delta import TextDelta, ToolCallDelta
+from tapehead.delta import ReasoningDelta, TextDelta, ToolCallDelta
 from tapehead.event import Generated, Returned, Yielded
 from tapehead.head import Head
 from tapehead.media.mem import MemTape
@@ -109,3 +109,27 @@ async def test_a_model_stuck_on_tools_is_stopped() -> None:
     events = [frame.event for frame in await tape.read()]
     assert sum(isinstance(event, Generated) for event in events) == 3
     assert isinstance(events[-1], Yielded) and events[-1].reason == "max_steps"
+
+
+@pytest.mark.asyncio
+async def test_the_model_sees_its_own_reasoning_between_tool_calls() -> None:
+    """模型边想边调工具, 拿到工具结果时还能看到自己调用前的推理, 推理随这一步的消息一起回放"""
+
+    tape = MemTape(Label(name="chat", created_at=time.time()))
+    provider = ScriptedProvider(
+        [
+            ReasoningDelta(text="先确认服务"),
+            ReasoningDelta(text="是否在线"),
+            ToolCallDelta(id="call-1", name="ping", arguments="{}"),
+        ],
+        [TextDelta(text="在线")],
+    )
+
+    async for _ in Head(provider, [ping]).run(tape, "服务还在吗"):
+        pass
+
+    match provider.calls[1].messages:
+        case [UserMessage(), AssistantMessage(reasoning=reasoning, tool_calls=[_]), ToolMessage()]:
+            assert reasoning == "先确认服务是否在线"
+        case messages:
+            pytest.fail(f"消息序列不符合预期: {messages}")
