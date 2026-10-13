@@ -9,7 +9,7 @@
   --bg: #0b0e14; --panel: #10141b; --panel2: #151a23; --hover: #1b2230; --border: #232a36; --border2: #2f3846;
   --text: #d6dce6; --muted: #7f8a9c; --faint: #4c5566; --accent: #5ea1ff; --sel: #1d3557;
   --c-configured: #9aa4b2; --c-prompted: #5ea1ff; --c-generated: #3fb950; --c-aborted: #f85149;
-  --c-dispatched: #e3b341; --c-returned: #bc8cff; --c-yielded: #6e7681; --c-compacted: #39c5cf;
+  --c-dispatched: #e3b341; --c-returned: #bc8cff; --c-yielded: #6e7681; --c-compacted: #39c5cf; --c-pruned: #db61a2;
   --err: #f85149; --warn: #e3b341; --info: #5ea1ff; --ok: #3fb950;
   --mono: ui-monospace, "JetBrains Mono", "Cascadia Code", SFMono-Regular, Consolas, monospace;
   --sans: system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
@@ -18,7 +18,7 @@
   --bg: #f5f6f8; --panel: #ffffff; --panel2: #f2f4f7; --hover: #eaeef4; --border: #dfe3ea; --border2: #c9cfd9;
   --text: #1f2328; --muted: #5f6b7a; --faint: #a3abb7; --sel: #dbe9ff;
   --c-configured: #6b7584; --c-prompted: #1f6feb; --c-generated: #1a7f37; --c-aborted: #cf222e;
-  --c-dispatched: #9a6700; --c-returned: #8250df; --c-yielded: #6e7781; --c-compacted: #0e8a99;
+  --c-dispatched: #9a6700; --c-returned: #8250df; --c-yielded: #6e7781; --c-compacted: #0e8a99; --c-pruned: #bf3989;
 }
 * { box-sizing: border-box; }
 html, body { height: 100%; }
@@ -116,7 +116,7 @@ main { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 :root.light .badge { color: #fff; }
 .t-configured { background: var(--c-configured); } .t-prompted { background: var(--c-prompted); } .t-generated { background: var(--c-generated); }
 .t-aborted { background: var(--c-aborted); } .t-dispatched { background: var(--c-dispatched); } .t-returned { background: var(--c-returned); }
-.t-yielded { background: var(--c-yielded); } .t-compacted { background: var(--c-compacted); }
+.t-yielded { background: var(--c-yielded); } .t-compacted { background: var(--c-compacted); } .t-pruned { background: var(--c-pruned); }
 .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; }
 .dot.error { background: var(--err); } .dot.warn { background: var(--warn); } .dot.info { background: var(--info); }
 
@@ -221,7 +221,7 @@ kbd { font: 11px var(--mono); border: 1px solid var(--border2); border-bottom-wi
 <script>
 "use strict";
 
-const TYPES = ["configured", "prompted", "generated", "aborted", "dispatched", "returned", "yielded", "compacted"];
+const TYPES = ["configured", "prompted", "generated", "aborted", "dispatched", "returned", "yielded", "compacted", "pruned"];
 const MEND_CONTENTS = new Set(["工具执行被中断, 结果未知", "工具没有执行"]);
 const MESSAGE_EVENTS = new Set(["prompted", "generated", "returned"]);
 const $ = (s) => document.querySelector(s);
@@ -383,9 +383,10 @@ function play(frames) {
   const messages = [];
   if (configured && configured.e.message.content) messages.push({ message: configured.e.message, source: configured.i, kind: "system" });
   if (compacted) messages.push({ message: compacted.e.message, source: compacted.i, kind: "summary" });
+  const pruned = new Map(frames.filter((f) => f.event.type === "pruned").map((f) => [f.event.target, f.event.message]));
   for (let i = compacted ? compacted.e.start : 0; i < frames.length; i++) {
     const e = frames[i].event;
-    if (MESSAGE_EVENTS.has(e.type)) messages.push({ message: e.message, source: i, kind: e.type });
+    if (MESSAGE_EVENTS.has(e.type)) messages.push({ message: (e.type === "returned" && pruned.get(i)) || e.message, source: i, kind: e.type });
   }
   return { messages, tools: configured ? configured.e.tools || [] : [], configured, compacted };
 }
@@ -605,6 +606,7 @@ function summarize(f, a) {
     }
     case "yielded": return e.reason;
     case "compacted": return `回放从 #${e.start} 开始 · ${oneLine(e.message.content, 120)}`;
+    case "pruned": return `#${e.target} 的工具结果 → ${fmtNum(e.message.content.length)} 字符  ${oneLine(e.message.content, 100)}`;
     default: return "";
   }
 }
@@ -945,7 +947,7 @@ function renderDetail() {
   const body = h("div", { class: "body" });
   if (issues.length) body.append(h("div", { class: "issue-list section" }, issues.map((x) => h("div", { class: `issue ${x.level}` }, h("span", { class: `dot ${x.level}` }), x.msg))));
   body.append(facts);
-  const renderers = { configured: detailConfigured, prompted: detailPrompted, generated: detailGenerated, aborted: detailAborted, dispatched: detailDispatched, returned: detailReturned, yielded: detailYielded, compacted: detailCompacted };
+  const renderers = { configured: detailConfigured, prompted: detailPrompted, generated: detailGenerated, aborted: detailAborted, dispatched: detailDispatched, returned: detailReturned, yielded: detailYielded, compacted: detailCompacted, pruned: detailPruned };
   body.append(...[].concat(renderers[e.type]?.(f, t) ?? []));
   const rawPre = h("pre", { class: "box" });
   body.append(h("details", { class: "section", ontoggle: (ev) => { if (ev.target.open && !rawPre.textContent) rawPre.textContent = jsonText({ recorded_at: f.recorded_at, event: e }); } },
@@ -1118,6 +1120,19 @@ function detailCompacted(f, t) {
       h("dt", null, "被替代"), h("dd", null, `${dropped.length} 条消息`)),
     section("摘要", `${fmtNum(e.message.content.length)} 字符`, textBlock(e.message.content, { cls: "summary" })),
     dropped.length ? section("被摘要替代的消息", null, dropped.map((m) => messageCard(m, { shared: false }))) : null,
+  ];
+}
+
+function detailPruned(f, t) {
+  const e = f.event;
+  const target = t.frames[e.target];
+  const original = target && target.event.type === "returned" ? target.event.message : null;
+  return [
+    h("dl", { class: "facts" },
+      h("dt", null, "目标"), h("dd", null, frameLink(e.target), "  ", original && original.call_id === e.message.call_id ? h("span", { class: "ok" }, "合法") : h("span", { class: "err" }, "不是同一调用的 Returned")),
+      h("dt", null, "字符"), h("dd", null, `${original ? fmtNum(original.content.length) : "?"} → ${fmtNum(e.message.content.length)}`)),
+    section("替换为", null, textBlock(e.message.content)),
+    original ? section("原结果", null, textBlock(original.content)) : null,
   ];
 }
 
