@@ -1,21 +1,21 @@
 import json
 import shutil
 import time
-from collections.abc import AsyncIterator, Sequence
 from pathlib import Path
 
 import pytest
 from msgspec import to_builtins
 
-from tapehead.delta import Delta, TextDelta, ToolCallDelta, UsageDelta
+from tapehead.delta import TextDelta, ToolCallDelta, UsageDelta
 from tapehead.event import Aborted, Dispatched, Generated, Prompted, Returned, Yielded, settle
 from tapehead.head import Head
 from tapehead.media.fs import FsSilo
 from tapehead.media.mem import MemTape
-from tapehead.message import AssistantMessage, Message, ToolMessage, UserMessage
+from tapehead.message import AssistantMessage, ToolMessage, UserMessage
 from tapehead.tapes.label import Label
-from tapehead.tapes.play import Context, mend, play
-from tapehead.tool import ToolSpec, tool
+from tapehead.tapes.play import mend, play
+from tapehead.testing import ScriptedProvider
+from tapehead.tool import tool
 
 
 @tool
@@ -25,30 +25,19 @@ def lookup(city: str) -> str:
     return f"{city}: 晴"
 
 
-class Flaky:
-    """记下每次收到的输入, 第一次调用直接失败, 之后先查天气再作答"""
-
-    def __init__(self) -> None:
-        self.inputs: list[Context] = []
-
-    async def stream(self, messages: list[Message], tools: Sequence[ToolSpec]) -> AsyncIterator[Delta]:
-        self.inputs.append(Context(messages=list(messages), tools=list(tools)))
-        if len(self.inputs) == 1:
-            yield TextDelta(text="半截")
-            raise ConnectionError("429 rate limited")
-        if isinstance(messages[-1], UserMessage):
-            yield ToolCallDelta(id="call-1", name="lookup", arguments=json.dumps({"city": "杭州"}))
-        else:
-            yield TextDelta(text="杭州晴")
-        yield UsageDelta(input_tokens=10, output_tokens=2)
-
-
 @pytest.mark.asyncio
 async def test_every_model_call_can_be_replayed_from_the_tape() -> None:
     """模型调用失败一次后用户重问, 磁带上每一次调用, 包括失败的那次, 都能从它之前的前缀精确还原当时的输入"""
 
     tape = MemTape(Label(name="chat", created_at=time.time()))
-    provider = Flaky()
+    provider = ScriptedProvider(
+        [TextDelta(text="半截"), ConnectionError("429 rate limited")],
+        [
+            ToolCallDelta(id="call-1", name="lookup", arguments=json.dumps({"city": "杭州"})),
+            UsageDelta(input_tokens=10, output_tokens=2),
+        ],
+        [TextDelta(text="杭州晴"), UsageDelta(input_tokens=10, output_tokens=2)],
+    )
     head = Head(provider, [lookup], system_prompt="你是天气助手")
 
     with pytest.raises(ConnectionError):
@@ -59,7 +48,7 @@ async def test_every_model_call_can_be_replayed_from_the_tape() -> None:
 
     frames = await tape.read()
     calls = [i for i, frame in enumerate(frames) if isinstance(frame.event, Generated | Aborted)]
-    assert [play(frames[:i]) for i in calls] == provider.inputs
+    assert [play(frames[:i]) for i in calls] == provider.calls
     assert [type(frames[i].event) for i in calls] == [Aborted, Generated, Generated]
     assert all("半截" not in message.content for message in play(frames).messages)
 
