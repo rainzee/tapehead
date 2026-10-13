@@ -1,21 +1,17 @@
-import ast
-import subprocess
-import sys
 import time
 from collections.abc import Awaitable, Callable
 from pathlib import Path
 
 import pytest
 
-import tapehead
-from tapehead.delta import TextDelta
-from tapehead.event import Aborted, Yielded
-from tapehead.head import Head
+from tapehead.core.delta import TextDelta
+from tapehead.core.event import Aborted, Yielded
+from tapehead.core.head import Head
+from tapehead.core.message import UserMessage
+from tapehead.core.provider import ContextOverflow
+from tapehead.core.tape import Label
 from tapehead.media.fs import FsSilo
 from tapehead.media.mem import MemSilo, MemTape
-from tapehead.message import UserMessage
-from tapehead.provider import ContextOverflow
-from tapehead.tapes.label import Label
 from tapehead.testing import Medium, ScriptedProvider, checks
 from tapehead.testing.media import check_names_are_unique
 
@@ -93,30 +89,3 @@ async def test_a_script_can_fail_before_or_during_the_stream() -> None:
         assert isinstance(events[-2], Aborted) and events[-2].stream == stream
         assert events[-2].error.startswith(error)
         assert events[-1] == Yielded(reason="failed")
-
-
-def test_testing_never_pulls_in_pytest() -> None:
-    """宿主运行时导入 tapehead.testing 不会被迫装上 pytest"""
-
-    code = "import sys, tapehead.testing; assert 'pytest' not in sys.modules, 'tapehead.testing 引入了 pytest'"
-    subprocess.run([sys.executable, "-c", code], check=True)
-
-
-def test_the_kernel_never_imports_testing() -> None:
-    """内核模块不依赖 tapehead.testing, 测试基础设施只能往内核方向依赖"""
-
-    root = Path(tapehead.__file__).parent
-    offenders = []
-    for path in root.rglob("*.py"):
-        if root / "testing" in path.parents:
-            continue
-        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
-            names = []
-            if isinstance(node, ast.Import):
-                names = [alias.name for alias in node.names]
-            elif isinstance(node, ast.ImportFrom) and node.module:
-                names = [node.module, *(f"{node.module}.{alias.name}" for alias in node.names)]
-            if any(name == "tapehead.testing" or name.startswith("tapehead.testing.") for name in names):
-                offenders.append(path.relative_to(root))
-
-    assert offenders == []

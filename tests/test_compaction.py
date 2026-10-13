@@ -3,17 +3,27 @@ from collections.abc import AsyncIterator, Sequence
 
 import pytest
 
-from tapehead.delta import Delta, TextDelta, ToolCallDelta
-from tapehead.event import Aborted, Compacted, Configured, Dispatched, Generated, Prompted, Pruned, Returned, Yielded, settle
-from tapehead.head import Head
+from tapehead.core.delta import Delta, TextDelta, ToolCallDelta
+from tapehead.core.event import (
+    Aborted,
+    Compacted,
+    Configured,
+    Dispatched,
+    Generated,
+    Prompted,
+    Pruned,
+    Returned,
+    Yielded,
+    settle,
+)
+from tapehead.core.head import Head
+from tapehead.core.message import AssistantMessage, Message, ToolMessage, UserMessage
+from tapehead.core.play import Context, cuts, play
+from tapehead.core.provider import ContextOverflow
+from tapehead.core.tape import Frame, Label
+from tapehead.core.tool import ToolSpec
 from tapehead.kit.tool import tool
 from tapehead.media.mem import MemTape
-from tapehead.message import AssistantMessage, Message, ToolMessage, UserMessage
-from tapehead.provider import ContextOverflow
-from tapehead.tapes.frame import Frame
-from tapehead.tapes.label import Label
-from tapehead.tapes.play import Context, cuts, play
-from tapehead.tool import ToolSpec
 
 
 def new_tape() -> MemTape:

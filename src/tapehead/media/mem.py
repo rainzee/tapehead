@@ -1,8 +1,7 @@
 import time
 
-from tapehead.event import Event
-from tapehead.tapes.frame import Frame
-from tapehead.tapes.label import Label
+from tapehead.core.event import Event
+from tapehead.core.tape import Frame, Label
 
 
 class MemTape:

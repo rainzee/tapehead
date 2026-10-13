@@ -1,10 +1,10 @@
 from collections import deque
 from collections.abc import AsyncIterator, Sequence
 
-from tapehead.delta import Delta
-from tapehead.message import Message
-from tapehead.tapes.play import Context
-from tapehead.tool import ToolSpec
+from tapehead.core.delta import Delta
+from tapehead.core.message import Message
+from tapehead.core.play import Context
+from tapehead.core.tool import ToolSpec
 
 type Step = Sequence[Delta | Exception] | Exception
 

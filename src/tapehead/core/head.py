@@ -1,7 +1,7 @@
 from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
 
-from tapehead.delta import Delta
-from tapehead.event import (
+from tapehead.core.delta import Delta
+from tapehead.core.event import (
     Aborted,
     Compacted,
     Configured,
@@ -15,14 +15,13 @@ from tapehead.event import (
     YieldReason,
     settle,
 )
-from tapehead.message import SystemMessage, ToolCall, ToolMessage, UserMessage
-from tapehead.provider import ContextOverflow, Provider
-from tapehead.stream import StreamItem
-from tapehead.tapes.frame import Frame
-from tapehead.tapes.play import admit, configuration, mend, play
-from tapehead.tapes.tape import Tape
-from tapehead.tool import Tool
+from tapehead.core.message import SystemMessage, ToolCall, ToolMessage, UserMessage
+from tapehead.core.play import admit, configuration, mend, play
+from tapehead.core.provider import ContextOverflow, Provider
+from tapehead.core.tape import Frame, Tape
+from tapehead.core.tool import Tool
 
+type StreamItem = Frame | Delta
 type Compactor = Callable[[list[Frame]], Awaitable[list[Compacted | Pruned]]]
 type Pruner = Callable[[ToolMessage], Awaitable[str | None]]
 

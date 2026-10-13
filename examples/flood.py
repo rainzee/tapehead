@@ -23,13 +23,13 @@ from pathlib import Path
 from chat import OpenAIProvider, open_tape, render
 from openai import AsyncOpenAI
 
-from tapehead.event import Compacted, Pruned, Returned
-from tapehead.head import Head
+from tapehead.core.event import Compacted, Pruned, Returned
+from tapehead.core.head import Head
+from tapehead.core.message import ToolMessage, UserMessage
+from tapehead.core.play import compaction, cuts
+from tapehead.core.tape import Frame
 from tapehead.kit.tool import tool
 from tapehead.media.fs import FsSilo
-from tapehead.message import ToolMessage, UserMessage
-from tapehead.tapes.frame import Frame
-from tapehead.tapes.play import compaction, cuts
 
 PATHS = ["/api/orders", "/api/users", "/api/search", "/api/payments", "/health"]
 

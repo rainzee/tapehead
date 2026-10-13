@@ -7,7 +7,7 @@ from typing import Any, get_type_hints, overload
 from msgspec import Struct, defstruct, structs
 from msgspec.json import decode, encode, schema_components
 
-from tapehead.tool import ToolSpec
+from tapehead.core.tool import ToolSpec
 
 
 def derive_parameters(func: Callable, name: str) -> type[Struct]:

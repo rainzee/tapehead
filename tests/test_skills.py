@@ -3,13 +3,13 @@ from pathlib import Path
 
 import pytest
 
-from tapehead.delta import TextDelta, ToolCallDelta
-from tapehead.head import Head
+from tapehead.core.delta import TextDelta, ToolCallDelta
+from tapehead.core.head import Head
+from tapehead.core.message import AssistantMessage, SystemMessage, ToolMessage, UserMessage
+from tapehead.core.play import play
+from tapehead.core.tape import Label
 from tapehead.kit.skill import load_skills, render_skills, skill_tool
 from tapehead.media.mem import MemTape
-from tapehead.message import AssistantMessage, SystemMessage, ToolMessage, UserMessage
-from tapehead.tapes.label import Label
-from tapehead.tapes.play import play
 from tapehead.testing import ScriptedProvider
 
 DEPLOY_SKILL = """\

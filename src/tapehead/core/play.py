@@ -2,10 +2,10 @@ from collections.abc import Sequence
 
 from msgspec import Struct
 
-from tapehead.event import Compacted, Configured, Dispatched, Event, Generated, Prompted, Pruned, Returned, Yielded
-from tapehead.message import Message, ToolMessage
-from tapehead.tapes.frame import Frame
-from tapehead.tool import ToolSpec
+from tapehead.core.event import Compacted, Configured, Dispatched, Event, Generated, Prompted, Pruned, Returned, Yielded
+from tapehead.core.message import Message, ToolMessage
+from tapehead.core.tape import Frame
+from tapehead.core.tool import ToolSpec
 
 
 class Context(Struct):

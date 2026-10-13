@@ -4,14 +4,14 @@ from pathlib import Path
 
 import pytest
 
-from tapehead.delta import Delta, TextDelta
-from tapehead.head import Head
+from tapehead.core.delta import Delta, TextDelta
+from tapehead.core.head import Head
+from tapehead.core.message import AssistantMessage, Message, UserMessage
+from tapehead.core.play import play
+from tapehead.core.tape import Label
+from tapehead.core.tool import ToolSpec
 from tapehead.media.fs import FsSilo
 from tapehead.media.mem import MemTape
-from tapehead.message import AssistantMessage, Message, UserMessage
-from tapehead.tapes.label import Label
-from tapehead.tapes.play import play
-from tapehead.tool import ToolSpec
 
 
 class ForgetfulProvider:

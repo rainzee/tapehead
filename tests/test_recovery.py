@@ -4,16 +4,16 @@ from pathlib import Path
 
 import pytest
 
-from tapehead.delta import Delta, TextDelta, ToolCallDelta
-from tapehead.event import Dispatched, Returned
-from tapehead.head import Head
+from tapehead.core.delta import Delta, TextDelta, ToolCallDelta
+from tapehead.core.event import Dispatched, Returned
+from tapehead.core.head import Head
+from tapehead.core.message import AssistantMessage, Message, ToolMessage
+from tapehead.core.tape import Label
+from tapehead.core.tool import ToolSpec
 from tapehead.kit.tool import tool
 from tapehead.media.fs import FsSilo
 from tapehead.media.mem import MemTape
-from tapehead.message import AssistantMessage, Message, ToolMessage
-from tapehead.tapes.label import Label
 from tapehead.testing import ScriptedProvider
-from tapehead.tool import ToolSpec
 
 
 class Killed(BaseException):

@@ -7,14 +7,14 @@ from typing import Annotated
 import pytest
 from msgspec import Meta
 
-from tapehead.delta import ReasoningDelta, TextDelta, ToolCallDelta
-from tapehead.event import Generated, Returned, Yielded
-from tapehead.head import Head
+from tapehead.core.delta import ReasoningDelta, TextDelta, ToolCallDelta
+from tapehead.core.event import Generated, Returned, Yielded
+from tapehead.core.head import Head
+from tapehead.core.message import AssistantMessage, ToolMessage, UserMessage
+from tapehead.core.play import play
+from tapehead.core.tape import Label
 from tapehead.kit.tool import tool
 from tapehead.media.mem import MemTape
-from tapehead.message import AssistantMessage, ToolMessage, UserMessage
-from tapehead.tapes.label import Label
-from tapehead.tapes.play import play
 from tapehead.testing import ScriptedProvider
 
 

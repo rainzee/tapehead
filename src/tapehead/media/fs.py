@@ -3,10 +3,9 @@ from pathlib import Path
 
 from msgspec.json import Decoder, decode, encode
 
-from tapehead.event import Event
+from tapehead.core.event import Event
+from tapehead.core.tape import Frame, Label
 from tapehead.media.mem import MemTape
-from tapehead.tapes.frame import Frame
-from tapehead.tapes.label import Label
 
 
 def read_label(path: Path) -> Label:

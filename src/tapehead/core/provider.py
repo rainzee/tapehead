@@ -1,9 +1,9 @@
 from collections.abc import AsyncIterator
 from typing import Protocol
 
-from tapehead.delta import Delta
-from tapehead.message import Message
-from tapehead.tool import ToolSpec
+from tapehead.core.delta import Delta
+from tapehead.core.message import Message
+from tapehead.core.tool import ToolSpec
 
 
 class ContextOverflow(Exception):
