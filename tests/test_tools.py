@@ -36,7 +36,7 @@ def reads_then_answers(path: Path) -> ScriptedProvider:
             ToolCallDelta(id="call-1", name="read_file", arguments=arguments[:half]),
             ToolCallDelta(id="call-1", arguments=arguments[half:]),
         ],
-        [TextDelta(text="读完了")],
+        [TextDelta(chunk="读完了")],
     )
 
 
@@ -118,11 +118,11 @@ async def test_the_model_sees_its_own_reasoning_between_tool_calls() -> None:
     tape = MemTape(Label(name="chat", created_at=time.time()))
     provider = ScriptedProvider(
         [
-            ReasoningDelta(text="先确认服务"),
-            ReasoningDelta(text="是否在线"),
+            ReasoningDelta(chunk="先确认服务"),
+            ReasoningDelta(chunk="是否在线"),
             ToolCallDelta(id="call-1", name="ping", arguments="{}"),
         ],
-        [TextDelta(text="在线")],
+        [TextDelta(chunk="在线")],
     )
 
     async for _ in Head(provider, [ping]).run(tape, "服务还在吗"):

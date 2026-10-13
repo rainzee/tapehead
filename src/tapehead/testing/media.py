@@ -3,7 +3,7 @@ import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 
-from tapehead.core.delta import Delta, ReasoningDelta, TextDelta, ToolCallDelta, UsageDelta
+from tapehead.core.delta import Delta, ReasoningDelta, TextDelta, ToolCallDelta, UsageDelta, settle
 from tapehead.core.event import (
     Aborted,
     Compacted,
@@ -15,7 +15,6 @@ from tapehead.core.event import (
     Pruned,
     Returned,
     Yielded,
-    settle,
 )
 from tapehead.core.message import SystemMessage, ToolMessage, UserMessage
 from tapehead.core.tape import Frame, Label, Silo, Tape
@@ -80,17 +79,17 @@ def sample_events() -> list[Event]:
 
     tools = [ToolDefinition(name="lookup", description="查询城市天气", parameters={"type": "object", "properties": {}})]
     calling: list[Delta] = [
-        ReasoningDelta(text="先查天气"),
+        ReasoningDelta(chunk="先查天气"),
         ToolCallDelta(id="call-1", name="lookup", arguments='{"city": '),
         ToolCallDelta(id="call-1", arguments='"杭州"}'),
         UsageDelta(input_tokens=12, output_tokens=5, cached_tokens=3),
     ]
-    answering: list[Delta] = [TextDelta(text="杭州"), TextDelta(text="晴"), UsageDelta(input_tokens=20, output_tokens=2)]
+    answering: list[Delta] = [TextDelta(chunk="杭州"), TextDelta(chunk="晴"), UsageDelta(input_tokens=20, output_tokens=2)]
 
     return [
         Configured(message=SystemMessage(content="你是天气助手"), tools=tools),
         Prompted(message=UserMessage(content="杭州天气")),
-        Aborted(stream=[TextDelta(text="半截")], error="ConnectionError: 429 rate limited"),
+        Aborted(stream=[TextDelta(chunk="半截")], error="ConnectionError: 429 rate limited"),
         Generated(stream=calling, message=settle(calling)),
         Dispatched(call_id="call-1"),
         Returned(message=ToolMessage(call_id="call-1", content="杭州: 晴")),

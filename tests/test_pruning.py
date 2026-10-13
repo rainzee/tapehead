@@ -30,7 +30,7 @@ def searches_then_answers(turns: int) -> ScriptedProvider:
 
     return ScriptedProvider(
         [ToolCallDelta(id="call-1", name="grep_logs", arguments='{"pattern": "timeout"}')],
-        *([TextDelta(text="最常见的是 /api/orders")] for _ in range(turns)),
+        *([TextDelta(chunk="最常见的是 /api/orders")] for _ in range(turns)),
     )
 
 
@@ -136,7 +136,7 @@ class Budget:
         if isinstance(messages[-1], UserMessage):
             yield ToolCallDelta(id="call-1", name="grep_logs", arguments='{"pattern": "timeout"}')
         else:
-            yield TextDelta(text="最常见的是 /api/orders")
+            yield TextDelta(chunk="最常见的是 /api/orders")
 
 
 @pytest.mark.asyncio

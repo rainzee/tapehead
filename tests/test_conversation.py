@@ -20,11 +20,11 @@ class ForgetfulProvider:
     async def stream(self, messages: list[Message], tools: Sequence[ToolDefinition]) -> AsyncIterator[Delta]:
         *earlier, asked = messages
         if "我叫什么" not in asked.content:
-            yield TextDelta(text="你好")
+            yield TextDelta(chunk="你好")
         elif any("我叫小明" in message.content for message in earlier):
-            yield TextDelta(text="你叫小明")
+            yield TextDelta(chunk="你叫小明")
         else:
-            yield TextDelta(text="我不知道")
+            yield TextDelta(chunk="我不知道")
 
 
 @pytest.mark.asyncio

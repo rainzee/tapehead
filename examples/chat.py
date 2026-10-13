@@ -69,9 +69,9 @@ class OpenAIProvider:
         async for chunk in chunks:
             for choice in chunk.choices:
                 if reasoning := getattr(choice.delta, "reasoning", None):
-                    yield ReasoningDelta(text=reasoning)
+                    yield ReasoningDelta(chunk=reasoning)
                 if choice.delta.content:
-                    yield TextDelta(text=choice.delta.content)
+                    yield TextDelta(chunk=choice.delta.content)
                 for call in choice.delta.tool_calls or []:
                     if call.id:
                         ids[call.index] = call.id
@@ -125,9 +125,9 @@ def render(item: Frame | Delta) -> None:
     """把一轮里的增量和帧打印到终端, 推理变暗, 工具调用和结果各占一行"""
 
     match item:
-        case ReasoningDelta(text=text):
+        case ReasoningDelta(chunk=text):
             print(f"{DIM}{text}{RESET}", end="", flush=True)
-        case TextDelta(text=text):
+        case TextDelta(chunk=text):
             print(text, end="", flush=True)
         case Frame(event=Generated(message=message)):
             print()

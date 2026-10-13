@@ -60,7 +60,7 @@ async def test_a_script_that_runs_out_fails_loudly() -> None:
     """脚本比模型调用少一步, 多出来的那次调用明确失败, 而不是悄悄给出空回答"""
 
     tape = new_tape()
-    provider = ScriptedProvider([TextDelta(text="你好")])
+    provider = ScriptedProvider([TextDelta(chunk="你好")])
     head = Head(provider)
 
     async for _ in head.run(tape, "一"):
@@ -78,7 +78,7 @@ async def test_a_script_can_fail_before_or_during_the_stream() -> None:
 
     for step, stream, error in (
         (ContextOverflow("maximum context length"), [], "ContextOverflow"),
-        ([TextDelta(text="半截"), ConnectionError("429")], [TextDelta(text="半截")], "ConnectionError"),
+        ([TextDelta(chunk="半截"), ConnectionError("429")], [TextDelta(chunk="半截")], "ConnectionError"),
     ):
         tape = new_tape()
         with pytest.raises(Exception, match=r"maximum context length|429"):

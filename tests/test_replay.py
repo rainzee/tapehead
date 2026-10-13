@@ -6,8 +6,8 @@ from pathlib import Path
 import pytest
 from msgspec import to_builtins
 
-from tapehead.core.delta import TextDelta, ToolCallDelta, UsageDelta
-from tapehead.core.event import Aborted, Dispatched, Generated, Prompted, Returned, Yielded, settle
+from tapehead.core.delta import TextDelta, ToolCallDelta, UsageDelta, settle
+from tapehead.core.event import Aborted, Dispatched, Generated, Prompted, Returned, Yielded
 from tapehead.core.head import Head
 from tapehead.core.message import AssistantMessage, ToolMessage, UserMessage
 from tapehead.core.play import mend, play
@@ -31,12 +31,12 @@ async def test_every_model_call_can_be_replayed_from_the_tape() -> None:
 
     tape = MemTape(Label(name="chat", created_at=time.time()))
     provider = ScriptedProvider(
-        [TextDelta(text="半截"), ConnectionError("429 rate limited")],
+        [TextDelta(chunk="半截"), ConnectionError("429 rate limited")],
         [
             ToolCallDelta(id="call-1", name="lookup", arguments=json.dumps({"city": "杭州"})),
             UsageDelta(input_tokens=10, output_tokens=2),
         ],
-        [TextDelta(text="杭州晴"), UsageDelta(input_tokens=10, output_tokens=2)],
+        [TextDelta(chunk="杭州晴"), UsageDelta(input_tokens=10, output_tokens=2)],
     )
     head = Head(provider, [lookup], system_prompt="你是天气助手")
 
@@ -118,4 +118,4 @@ def test_a_generation_cannot_disagree_with_its_stream() -> None:
     """模型消息和它的增量流说的不是同一件事时, 这条事实根本构造不出来, 解码磁带时同样被拒绝"""
 
     with pytest.raises(ValueError, match="不一致"):
-        Generated(stream=[TextDelta(text="晴")], message=AssistantMessage(content="雨"))
+        Generated(stream=[TextDelta(chunk="晴")], message=AssistantMessage(content="雨"))

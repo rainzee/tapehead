@@ -39,7 +39,7 @@ class Gateway:
         if messages[-1].content == "部署":
             yield ToolCallDelta(id="call-1", name="deploy", arguments="{}")
         else:
-            yield TextDelta(text="好的")
+            yield TextDelta(chunk="好的")
 
 
 @pytest.mark.asyncio
@@ -126,7 +126,7 @@ async def test_a_tool_is_durable_on_both_sides() -> None:
         seen.append(list(tape.flushed))
         return "pong"
 
-    provider = ScriptedProvider([ToolCallDelta(id="call-1", name="ping", arguments="{}")], [TextDelta(text="通")])
+    provider = ScriptedProvider([ToolCallDelta(id="call-1", name="ping", arguments="{}")], [TextDelta(chunk="通")])
 
     async for _ in Head(provider, [ping]).run(tape, "ping"):
         pass

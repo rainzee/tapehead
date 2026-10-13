@@ -3,19 +3,8 @@ from collections.abc import AsyncIterator, Sequence
 
 import pytest
 
-from tapehead.core.delta import Delta, TextDelta, ToolCallDelta
-from tapehead.core.event import (
-    Aborted,
-    Compacted,
-    Configured,
-    Dispatched,
-    Edit,
-    Generated,
-    Prompted,
-    Returned,
-    Yielded,
-    settle,
-)
+from tapehead.core.delta import Delta, TextDelta, ToolCallDelta, settle
+from tapehead.core.event import Aborted, Compacted, Configured, Dispatched, Edit, Generated, Prompted, Returned, Yielded
 from tapehead.core.head import Head
 from tapehead.core.message import AssistantMessage, Message, ToolMessage, UserMessage
 from tapehead.core.play import Context, cuts, play
@@ -41,7 +30,7 @@ class Window:
         self.inputs.append(Context(messages=list(messages), tools=list(tools)))
         if len(messages) > self.limit:
             raise ContextOverflow("maximum context length")
-        yield TextDelta(text=f"收到 {messages[-1].content}")
+        yield TextDelta(chunk=f"收到 {messages[-1].content}")
 
 
 def replayed(frames: list[Frame], provider: Window, since: int = 0) -> bool:
@@ -73,7 +62,7 @@ def returned(call_id: str) -> Returned:
 
 
 def answered() -> Generated:
-    stream: list[Delta] = [TextDelta(text="都晴")]
+    stream: list[Delta] = [TextDelta(chunk="都晴")]
 
     return Generated(stream=stream, message=settle(stream))
 
@@ -252,7 +241,7 @@ class Gateway:
         if messages[-1].content == "部署":
             yield ToolCallDelta(id="call-1", name="deploy", arguments="{}")
         else:
-            yield TextDelta(text="好的")
+            yield TextDelta(chunk="好的")
 
 
 @pytest.mark.asyncio

@@ -1,6 +1,6 @@
 from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
 
-from tapehead.core.delta import Delta
+from tapehead.core.delta import Delta, settle
 from tapehead.core.event import (
     Aborted,
     Configured,
@@ -13,7 +13,6 @@ from tapehead.core.event import (
     Returned,
     Yielded,
     YieldReason,
-    settle,
 )
 from tapehead.core.message import SystemMessage, ToolCall, ToolMessage, UserMessage
 from tapehead.core.play import admit, configuration, mend, play

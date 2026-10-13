@@ -1,31 +1,10 @@
-from collections.abc import Sequence
 from typing import Literal
 
 from msgspec import Struct
 
-from tapehead.core.delta import Delta, ReasoningDelta, TextDelta, ToolCallDelta
-from tapehead.core.message import AssistantMessage, SystemMessage, ToolCall, ToolMessage, UserMessage
+from tapehead.core.delta import Delta, settle
+from tapehead.core.message import AssistantMessage, SystemMessage, ToolMessage, UserMessage
 from tapehead.core.tool import ToolDefinition
-
-
-def settle(stream: Sequence[Delta]) -> AssistantMessage:
-    """把一次模型调用的增量结算成模型消息
-
-    参数
-    - stream: 按到达顺序排列的增量
-    """
-
-    text = "".join(delta.text for delta in stream if isinstance(delta, TextDelta))
-    reasoning = "".join(delta.text for delta in stream if isinstance(delta, ReasoningDelta))
-    calls: dict[str, ToolCall] = {}
-
-    for delta in stream:
-        if isinstance(delta, ToolCallDelta):
-            call = calls.setdefault(delta.id, ToolCall(id=delta.id, name="", arguments=""))
-            call.name = delta.name or call.name
-            call.arguments += delta.arguments
-
-    return AssistantMessage(content=text, reasoning=reasoning, tool_calls=list(calls.values()))
 
 
 class Configured(Struct, tag="configured"):

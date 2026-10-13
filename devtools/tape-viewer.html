@@ -338,8 +338,8 @@ function section(title, right, ...body) {
 // 以下与 src/tapehead 的实现逐行对应, 改内核时同步改这里
 
 function settle(stream) {
-  const text = stream.filter((d) => d.type === "text").map((d) => d.text).join("");
-  const reasoning = stream.filter((d) => d.type === "reasoning").map((d) => d.text).join("");
+  const text = stream.filter((d) => d.type === "text").map((d) => d.chunk).join("");
+  const reasoning = stream.filter((d) => d.type === "reasoning").map((d) => d.chunk).join("");
   const calls = new Map();
   for (const d of stream) {
     if (d.type !== "tool_call") continue;
@@ -1000,7 +1000,7 @@ function groupStream(stream) {
   for (const d of stream) {
     const last = out.at(-1);
     if (d.type === "text" || d.type === "reasoning") {
-      if (last && last.type === d.type) { last.text += d.text; last.count++; } else out.push({ type: d.type, text: d.text, count: 1 });
+      if (last && last.type === d.type) { last.text += d.chunk; last.count++; } else out.push({ type: d.type, text: d.chunk, count: 1 });
     } else if (d.type === "tool_call") {
       if (last && last.type === "tool_call" && last.id === d.id) { last.arguments += d.arguments || ""; if (d.name) last.name = d.name; last.count++; }
       else out.push({ type: "tool_call", id: d.id, name: d.name || "", arguments: d.arguments || "", count: 1 });

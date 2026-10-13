@@ -34,7 +34,7 @@ async def test_agent_loads_a_skill_listed_in_the_system_prompt(tmp_path: Path) -
     tape = MemTape(Label(name="chat", created_at=time.time()))
     provider = ScriptedProvider(
         [ToolCallDelta(id="call-1", name="skill", arguments='{"name": "deploy-guide"}')],
-        [TextDelta(text="按规范办")],
+        [TextDelta(chunk="按规范办")],
     )
 
     skills = load_skills(tmp_path)
