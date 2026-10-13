@@ -99,11 +99,11 @@ GOLDEN = Path(__file__).parent / "tapes"
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("name", ["weather", "compacted"])
+@pytest.mark.parametrize("name", ["weather", "compacted", "pruned"])
 async def test_a_recorded_tape_still_plays_the_same(tmp_path: Path, name: str) -> None:
     """录好的样本磁带用当前代码回放, 得出的上下文和录制时一致, 投影规则一变就会在这里暴露
 
-    weather 有一次失败的调用和工具调用, compacted 在一轮中途溢出后压缩, 保留了这一轮的工具调用
+    weather 有一次失败的调用和工具调用, compacted 在一轮中途溢出后压缩, 保留了这一轮的工具调用, pruned 在两轮之间把日志输出换成了占位
     """
 
     for file in GOLDEN.glob(f"{name}.*"):
