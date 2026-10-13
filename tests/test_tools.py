@@ -133,3 +133,16 @@ async def test_the_model_sees_its_own_reasoning_between_tool_calls() -> None:
             assert reasoning == "先确认服务是否在线"
         case messages:
             pytest.fail(f"消息序列不符合预期: {messages}")
+
+
+def test_two_tools_with_the_same_name_are_refused() -> None:
+    """宿主装了两个同名工具, 模型按名字只能调到其中一个, Head 构造时就直接报错, 而不是悄悄让另一个失效"""
+
+    @tool(name="ping")
+    def another_ping() -> str:
+        """另一个探活"""
+
+        return "pong"
+
+    with pytest.raises(ValueError, match="工具重名: ping"):
+        Head(ScriptedProvider(), [ping, another_ping])

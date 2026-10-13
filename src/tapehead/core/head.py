@@ -47,7 +47,7 @@ class Head:
         """
         参数
         - provider: 模型提供方
-        - tools: 可用的工具
+        - tools: 可用的工具, 模型按名字调用, 不能重名
         - system_prompt: 系统提示, 和工具定义一起作为 Configured 落带, 只在变化时写
         - max_steps: 单轮最多被接纳的模型调用次数
         - pruner: 每个工具结果录下后交给它, 返回替换的内容时紧接着录一条 Pruned, 模型从不会看到原文,
@@ -57,11 +57,13 @@ class Head:
         """
 
         self.provider = provider
-        self.tools = list(tools)
-        self.configured = Configured(
-            message=SystemMessage(content=system_prompt),
-            tools=[tool.spec for tool in self.tools],
-        )
+        specs = [tool.spec for tool in tools]
+        names = [spec.name for spec in specs]
+        if duplicated := sorted({name for name in names if names.count(name) > 1}):
+            raise ValueError(f"工具重名: {', '.join(duplicated)}")
+
+        self.tools = dict(zip(names, tools, strict=True))
+        self.configured = Configured(message=SystemMessage(content=system_prompt), tools=specs)
         self.max_steps = max_steps
         self.pruner = pruner
         self.compactor = compactor
@@ -174,7 +176,7 @@ class Head:
         - call: 模型请求的工具调用
         """
 
-        tool = next((tool for tool in self.tools if tool.spec.name == call.name), None)
+        tool = self.tools.get(call.name)
         if tool is None:
             return Returned(message=ToolMessage(call_id=call.id, content=f"未知工具: {call.name}", is_error=True))
 
