@@ -239,7 +239,7 @@ class Gateway:
         answered = [m.call_id for m in messages if isinstance(m, ToolMessage)]
         assert sorted(requested) == sorted(answered), f"调用 {requested} 与结果 {answered} 不配对"
         if messages[-1].content == "部署":
-            yield ToolCallDelta(id="call-1", name="deploy", arguments="{}")
+            yield ToolCallDelta(id="call-1", name="deploy", chunk="{}")
         else:
             yield TextDelta(chunk="好的")
 

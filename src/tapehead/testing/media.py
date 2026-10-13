@@ -80,8 +80,8 @@ def sample_events() -> list[Event]:
     tools = [ToolDefinition(name="lookup", description="查询城市天气", parameters={"type": "object", "properties": {}})]
     calling: list[Delta] = [
         ReasoningDelta(chunk="先查天气"),
-        ToolCallDelta(id="call-1", name="lookup", arguments='{"city": '),
-        ToolCallDelta(id="call-1", arguments='"杭州"}'),
+        ToolCallDelta(id="call-1", name="lookup", chunk='{"city": '),
+        ToolCallDelta(id="call-1", chunk='"杭州"}'),
         UsageDelta(input_tokens=12, output_tokens=5, cached_tokens=3),
     ]
     answering: list[Delta] = [TextDelta(chunk="杭州"), TextDelta(chunk="晴"), UsageDelta(input_tokens=20, output_tokens=2)]

@@ -33,7 +33,7 @@ async def test_every_model_call_can_be_replayed_from_the_tape() -> None:
     provider = ScriptedProvider(
         [TextDelta(chunk="半截"), ConnectionError("429 rate limited")],
         [
-            ToolCallDelta(id="call-1", name="lookup", arguments=json.dumps({"city": "杭州"})),
+            ToolCallDelta(id="call-1", name="lookup", chunk=json.dumps({"city": "杭州"})),
             UsageDelta(input_tokens=10, output_tokens=2),
         ],
         [TextDelta(chunk="杭州晴"), UsageDelta(input_tokens=10, output_tokens=2)],

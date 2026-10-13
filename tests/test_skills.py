@@ -33,7 +33,7 @@ async def test_agent_loads_a_skill_listed_in_the_system_prompt(tmp_path: Path) -
     (tmp_path / "deploy-guide" / "SKILL.md").write_text(DEPLOY_SKILL, encoding="utf-8")
     tape = MemTape(Label(name="chat", created_at=time.time()))
     provider = ScriptedProvider(
-        [ToolCallDelta(id="call-1", name="skill", arguments='{"name": "deploy-guide"}')],
+        [ToolCallDelta(id="call-1", name="skill", chunk='{"name": "deploy-guide"}')],
         [TextDelta(chunk="按规范办")],
     )
 

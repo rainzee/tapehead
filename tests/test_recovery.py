@@ -37,7 +37,7 @@ class Gateway:
                 for call in message.tool_calls:
                     assert call.id in answered, f"工具调用 {call.id} 没有结果"
         if messages[-1].content == "部署":
-            yield ToolCallDelta(id="call-1", name="deploy", arguments="{}")
+            yield ToolCallDelta(id="call-1", name="deploy", chunk="{}")
         else:
             yield TextDelta(chunk="好的")
 
@@ -126,7 +126,7 @@ async def test_a_tool_is_durable_on_both_sides() -> None:
         seen.append(list(tape.flushed))
         return "pong"
 
-    provider = ScriptedProvider([ToolCallDelta(id="call-1", name="ping", arguments="{}")], [TextDelta(chunk="通")])
+    provider = ScriptedProvider([ToolCallDelta(id="call-1", name="ping", chunk="{}")], [TextDelta(chunk="通")])
 
     async for _ in Head(provider, [ping]).run(tape, "ping"):
         pass

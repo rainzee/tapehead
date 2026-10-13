@@ -18,11 +18,11 @@ class ReasoningDelta(Struct, tag="reasoning"):
 
 
 class ToolCallDelta(Struct, tag="tool_call"):
-    """工具调用增量, 同一 id 的片段按序拼接"""
+    """工具调用增量, chunk 是参数 JSON 的一段, 同一 id 的片段按序拼接"""
 
     id: str
     name: str | None = None
-    arguments: str = ""
+    chunk: str = ""
 
 
 class UsageDelta(Struct, tag="usage"):
@@ -51,6 +51,6 @@ def settle(stream: Sequence[Delta]) -> AssistantMessage:
         if isinstance(delta, ToolCallDelta):
             call = calls.setdefault(delta.id, ToolCall(id=delta.id, name="", arguments=""))
             call.name = delta.name or call.name
-            call.arguments += delta.arguments
+            call.arguments += delta.chunk
 
     return AssistantMessage(content=content, reasoning=reasoning, tool_calls=list(calls.values()))

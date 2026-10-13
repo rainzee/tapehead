@@ -79,7 +79,7 @@ class OpenAIProvider:
                     yield ToolCallDelta(
                         id=ids[call.index],
                         name=function.name if function else None,
-                        arguments=(function.arguments or "") if function else "",
+                        chunk=(function.arguments or "") if function else "",
                     )
             if chunk.usage is not None:
                 details = chunk.usage.prompt_tokens_details

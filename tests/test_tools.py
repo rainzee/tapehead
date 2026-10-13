@@ -33,8 +33,8 @@ def reads_then_answers(path: Path) -> ScriptedProvider:
 
     return ScriptedProvider(
         [
-            ToolCallDelta(id="call-1", name="read_file", arguments=arguments[:half]),
-            ToolCallDelta(id="call-1", arguments=arguments[half:]),
+            ToolCallDelta(id="call-1", name="read_file", chunk=arguments[:half]),
+            ToolCallDelta(id="call-1", chunk=arguments[half:]),
         ],
         [TextDelta(chunk="读完了")],
     )
@@ -98,7 +98,7 @@ async def test_a_model_stuck_on_tools_is_stopped() -> None:
     """模型卡在反复请求工具上, 这一轮在步数上限处收尾, 磁带上不留下没闭合的轮次"""
 
     tape = MemTape(Label(name="chat", created_at=time.time()))
-    provider = ScriptedProvider(*([ToolCallDelta(id=f"call-{i}", name="ping", arguments="{}")] for i in range(3)))
+    provider = ScriptedProvider(*([ToolCallDelta(id=f"call-{i}", name="ping", chunk="{}")] for i in range(3)))
 
     async def drain() -> None:
         async for _ in Head(provider, [ping], max_steps=3).run(tape, "ping 到天荒地老"):
@@ -120,7 +120,7 @@ async def test_the_model_sees_its_own_reasoning_between_tool_calls() -> None:
         [
             ReasoningDelta(chunk="先确认服务"),
             ReasoningDelta(chunk="是否在线"),
-            ToolCallDelta(id="call-1", name="ping", arguments="{}"),
+            ToolCallDelta(id="call-1", name="ping", chunk="{}"),
         ],
         [TextDelta(chunk="在线")],
     )

@@ -29,7 +29,7 @@ def searches_then_answers(turns: int) -> ScriptedProvider:
     """第一轮先搜日志再作答, 之后每轮直接作答"""
 
     return ScriptedProvider(
-        [ToolCallDelta(id="call-1", name="grep_logs", arguments='{"pattern": "timeout"}')],
+        [ToolCallDelta(id="call-1", name="grep_logs", chunk='{"pattern": "timeout"}')],
         *([TextDelta(chunk="最常见的是 /api/orders")] for _ in range(turns)),
     )
 
@@ -134,7 +134,7 @@ class Budget:
         if sum(len(message.content) for message in messages) > self.limit:
             raise ContextOverflow("maximum context length")
         if isinstance(messages[-1], UserMessage):
-            yield ToolCallDelta(id="call-1", name="grep_logs", arguments='{"pattern": "timeout"}')
+            yield ToolCallDelta(id="call-1", name="grep_logs", chunk='{"pattern": "timeout"}')
         else:
             yield TextDelta(chunk="最常见的是 /api/orders")
 
