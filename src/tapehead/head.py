@@ -32,7 +32,7 @@ class Head:
     """磁头, 回放磁带得出上下文, 驱动模型并把结果录回磁带
 
     模型的输入只经由 play 从磁带得出, 不在 play 之外加工
-    执行工具前和一轮结束时 flush, 工具的副作用发生时 Dispatched 必已落盘
+    执行工具前后和一轮结束时 flush, 工具的副作用发生时 Dispatched 必已落盘, 它的结果录下即落盘
     从读取前缀发起一次模型调用, 到它的 Generated 或 Aborted 落带, 之间不提交改变上下文的事件,
     所以同一盘带同一时刻只能有一个 run 或 compact 在进行, 这由宿主保证
     """
@@ -123,6 +123,7 @@ class Head:
                 await tape.flush()
                 for frame in await tape.record(await self.execute(call)):
                     yield frame
+                await tape.flush()
 
             if not calls:
                 reason = "completed"

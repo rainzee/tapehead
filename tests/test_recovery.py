@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from tapehead.delta import Delta, TextDelta, ToolCallDelta
-from tapehead.event import Dispatched
+from tapehead.event import Dispatched, Returned
 from tapehead.head import Head
 from tapehead.media.fs import FsSilo
 from tapehead.media.mem import MemTape
@@ -112,8 +112,8 @@ class Watched(MemTape):
 
 
 @pytest.mark.asyncio
-async def test_a_tool_runs_only_after_its_dispatch_is_durable() -> None:
-    """工具的副作用发生时, 派发记录已经落盘, 崩溃后修复不会把执行过的工具当成没执行"""
+async def test_a_tool_is_durable_on_both_sides() -> None:
+    """工具的副作用发生时, 派发记录已经落盘, 结果录下后也立即落盘, 崩溃后修复既不会把执行过的工具当成没执行, 也不会丢掉它的结果"""
 
     tape = Watched()
     seen: list[list[int]] = []
@@ -133,4 +133,5 @@ async def test_a_tool_runs_only_after_its_dispatch_is_durable() -> None:
     frames = await tape.read()
     dispatched = next(i for i, frame in enumerate(frames) if isinstance(frame.event, Dispatched))
     assert seen == [[dispatched + 1]]
-    assert tape.flushed[-1] == len(frames)
+    assert tape.flushed == [dispatched + 1, dispatched + 2, len(frames)]
+    assert isinstance(frames[dispatched + 1].event, Returned)
