@@ -2,7 +2,7 @@ from collections.abc import Sequence
 
 from msgspec import Struct
 
-from tapehead.core.event import Compacted, Configured, Dispatched, Event, Generated, Prompted, Pruned, Returned, Yielded
+from tapehead.core.event import Compacted, Configured, Dispatched, Edit, Event, Generated, Prompted, Pruned, Returned, Yielded
 from tapehead.core.message import Message, ToolMessage
 from tapehead.core.tape import Frame
 from tapehead.core.tool import ToolSpec
@@ -62,7 +62,7 @@ def cuts(frames: Sequence[Frame]) -> list[int]:
     return found
 
 
-def admit(frames: Sequence[Frame], *edits: Compacted | Pruned) -> None:
+def admit(frames: Sequence[Frame], *edits: Edit) -> None:
     """校验一批视图编辑能否按顺序落在这盘带的末尾, 有一条不合法即拒绝整批
 
     每条编辑都当作落在前一条之后来校验, 压缩的切点必须在 cuts 里,

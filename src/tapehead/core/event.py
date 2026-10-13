@@ -101,4 +101,6 @@ class Pruned(Struct, tag="pruned"):
     message: ToolMessage
 
 
+type Edit = Compacted | Pruned
+
 type Event = Configured | Prompted | Generated | Aborted | Dispatched | Returned | Yielded | Compacted | Pruned

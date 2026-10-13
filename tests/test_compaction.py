@@ -9,9 +9,9 @@ from tapehead.core.event import (
     Compacted,
     Configured,
     Dispatched,
+    Edit,
     Generated,
     Prompted,
-    Pruned,
     Returned,
     Yielded,
     settle,
@@ -129,10 +129,10 @@ async def test_the_host_compacts_between_turns() -> None:
     for prompt in ("一", "二"):
         async for _ in head.run(tape, prompt):
             pass
-    await head.compact(tape, Compacted(start=latest_prompt(await tape.read()), message=summary("说过一")))
+    await head.edit(tape, Compacted(start=latest_prompt(await tape.read()), message=summary("说过一")))
     async for _ in head.run(tape, "三"):
         pass
-    await head.compact(tape, Compacted(start=latest_prompt(await tape.read()), message=summary("说过一和二")))
+    await head.edit(tape, Compacted(start=latest_prompt(await tape.read()), message=summary("说过一和二")))
     async for _ in head.run(tape, "四"):
         pass
 
@@ -161,13 +161,13 @@ async def test_a_compaction_at_an_illegal_cut_is_refused() -> None:
 
     for start in (0, 2, 3):
         with pytest.raises(ValueError, match="不合法"):
-            await head.compact(tape, Compacted(start=start, message=summary("查天气")))
+            await head.edit(tape, Compacted(start=start, message=summary("查天气")))
     assert await tape.read() == frames
 
     await tape.record(returned("b"))
-    await head.compact(tape, Compacted(start=1, message=summary("查天气")))
+    await head.edit(tape, Compacted(start=1, message=summary("查天气")))
     with pytest.raises(ValueError, match="不合法"):
-        await head.compact(tape, Compacted(start=1, message=summary("查天气")))
+        await head.edit(tape, Compacted(start=1, message=summary("查天气")))
 
 
 @pytest.mark.asyncio
@@ -177,7 +177,7 @@ async def test_an_overflow_mid_turn_is_compacted_and_retried() -> None:
     tape = new_tape()
     provider = Window(limit=4)
 
-    async def compactor(frames: list[Frame]) -> list[Compacted | Pruned]:
+    async def compactor(frames: list[Frame]) -> list[Edit]:
         return [Compacted(start=latest_prompt(frames), message=summary("说过一和二"))]
 
     head = Head(provider, system_prompt="你是助手", compactor=compactor)
@@ -199,7 +199,7 @@ async def test_an_overflow_that_compaction_cannot_fix_fails_the_turn() -> None:
     tape = new_tape()
     provider = Window(limit=0)
 
-    async def compactor(frames: list[Frame]) -> list[Compacted | Pruned]:
+    async def compactor(frames: list[Frame]) -> list[Edit]:
         return [Compacted(start=latest_prompt(frames), message=summary("说过一"))]
 
     await tape.record(Prompted(message=UserMessage(content="一")), answered(), Yielded(reason="completed"))
@@ -217,10 +217,10 @@ async def test_an_overflow_that_compaction_cannot_fix_fails_the_turn() -> None:
 async def test_an_overflow_without_a_usable_compaction_fails_the_turn() -> None:
     """没有压缩器, 压缩器给不出, 或者给出非法切点, 溢出都按失败结束这一轮, 不落任何压缩"""
 
-    async def gives_up(frames: list[Frame]) -> list[Compacted | Pruned]:
+    async def gives_up(frames: list[Frame]) -> list[Edit]:
         return []
 
-    async def illegal(frames: list[Frame]) -> list[Compacted | Pruned]:
+    async def illegal(frames: list[Frame]) -> list[Edit]:
         return [Compacted(start=0, message=summary("全部"))]
 
     for compactor, error in ((None, ContextOverflow), (gives_up, ContextOverflow), (illegal, ValueError)):
@@ -267,7 +267,7 @@ async def test_a_call_cut_off_by_a_crash_stays_paired_after_compaction() -> None
         async for _ in head.run(tape, "部署"):
             pass
 
-    await head.compact(tape, Compacted(start=latest_prompt(await tape.read()), message=summary("打过招呼")))
+    await head.edit(tape, Compacted(start=latest_prompt(await tape.read()), message=summary("打过招呼")))
     async for _ in head.run(tape, "你还在吗"):
         pass
 

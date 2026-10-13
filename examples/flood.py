@@ -23,7 +23,7 @@ from pathlib import Path
 from chat import OpenAIProvider, open_tape, render
 from openai import AsyncOpenAI
 
-from tapehead.core.event import Compacted, Pruned, Returned
+from tapehead.core.event import Compacted, Edit, Pruned, Returned
 from tapehead.core.head import Head
 from tapehead.core.message import ToolMessage, UserMessage
 from tapehead.core.play import compaction, cuts
@@ -62,13 +62,13 @@ async def head_tail(message: ToolMessage) -> str | None:
     return f"{content[:keep]}\n[... 已省略中间 {len(content) - BUDGET} 字符 ...]\n{content[-keep:]}"
 
 
-async def prune_then_compact(frames: list[Frame]) -> list[Compacted | Pruned]:
+async def prune_then_compact(frames: list[Frame]) -> list[Edit]:
     """先把保留段里过大的工具结果裁成头尾, 没有可裁的再压到最后一个切点, 摘要交代丢了什么"""
 
     current = compaction(frames)
     floor = current.start if current is not None else 0
     done = {frame.event.target for frame in frames if isinstance(frame.event, Pruned)}
-    edits: list[Compacted | Pruned] = []
+    edits: list[Edit] = []
     for i, frame in enumerate(frames[floor:], floor):
         if isinstance(frame.event, Returned) and i not in done and (content := await head_tail(frame.event.message)):
             edits.append(Pruned(target=i, message=ToolMessage(call_id=frame.event.message.call_id, content=content)))
