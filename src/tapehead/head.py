@@ -19,7 +19,6 @@ from tapehead.event import (
 )
 from tapehead.message import SystemMessage, ToolCall, ToolMessage, UserMessage
 from tapehead.provider import ContextOverflow, Provider
-from tapehead.skill import Skill, render_skills, skill_tool
 from tapehead.stream import StreamItem
 from tapehead.tapes.frame import Frame
 from tapehead.tapes.play import admit, configuration, mend, play
@@ -44,7 +43,6 @@ class Head:
         provider: Provider,
         tools: Sequence[Tool] = (),
         system_prompt: str = "",
-        skills: Sequence[Skill] = (),
         max_steps: int = 50,
         pruner: Pruner | None = None,
         compactor: Compactor | None = None,
@@ -54,7 +52,6 @@ class Head:
         - provider: 模型提供方
         - tools: 可用的工具
         - system_prompt: 系统提示, 和工具定义一起作为 Configured 落带, 只在变化时写
-        - skills: 可用的技能, 目录并入系统提示, 同时多出一个加载正文的 skill 工具
         - max_steps: 单轮最多被接纳的模型调用次数
         - pruner: 每个工具结果录下后交给它, 返回替换的内容时紧接着录一条 Pruned, 模型从不会看到原文,
           返回 None 时原样保留, 替换的内容要交代省略了什么
@@ -63,9 +60,9 @@ class Head:
         """
 
         self.provider = provider
-        self.tools = [*tools, *([skill_tool(skills)] if skills else [])]
+        self.tools = list(tools)
         self.configured = Configured(
-            message=SystemMessage(content="\n\n".join(part for part in (system_prompt, render_skills(skills)) if part)),
+            message=SystemMessage(content=system_prompt),
             tools=[tool.spec for tool in self.tools],
         )
         self.max_steps = max_steps

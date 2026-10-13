@@ -31,10 +31,10 @@ from openai.types.chat import (
     ChatCompletionToolParam,
 )
 
-from tapehead.builtin.read import read_tool
 from tapehead.delta import Delta, ReasoningDelta, TextDelta, ToolCallDelta, UsageDelta
 from tapehead.event import Aborted, Generated, Returned, Yielded
 from tapehead.head import Head
+from tapehead.kit.read import read_tool
 from tapehead.media.fs import FsSilo, FsTape
 from tapehead.message import AssistantMessage, Message, SystemMessage, ToolMessage, UserMessage
 from tapehead.provider import ContextOverflow

@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from tapehead.builtin.read import read_tool
+from tapehead.kit.read import read_tool
 
 
 @pytest.mark.asyncio

@@ -5,9 +5,9 @@ import pytest
 
 from tapehead.delta import TextDelta, ToolCallDelta
 from tapehead.head import Head
+from tapehead.kit.skill import load_skills, render_skills, skill_tool
 from tapehead.media.mem import MemTape
 from tapehead.message import AssistantMessage, SystemMessage, ToolMessage, UserMessage
-from tapehead.skill import load_skills
 from tapehead.tapes.label import Label
 from tapehead.tapes.play import play
 from tapehead.testing import ScriptedProvider
@@ -37,7 +37,10 @@ async def test_agent_loads_a_skill_listed_in_the_system_prompt(tmp_path: Path) -
         [TextDelta(text="按规范办")],
     )
 
-    async for _ in Head(provider, skills=load_skills(tmp_path)).run(tape, "怎么部署这个服务"):
+    skills = load_skills(tmp_path)
+    head = Head(provider, [skill_tool(skills)], render_skills(skills))
+
+    async for _ in head.run(tape, "怎么部署这个服务"):
         pass
 
     messages = play(await tape.read()).messages
