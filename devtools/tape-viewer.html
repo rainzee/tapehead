@@ -339,6 +339,7 @@ function section(title, right, ...body) {
 
 function settle(stream) {
   const text = stream.filter((d) => d.type === "text").map((d) => d.text).join("");
+  const reasoning = stream.filter((d) => d.type === "reasoning").map((d) => d.text).join("");
   const calls = new Map();
   for (const d of stream) {
     if (d.type !== "tool_call") continue;
@@ -347,11 +348,11 @@ function settle(stream) {
     call.name = d.name || call.name;
     call.arguments += d.arguments || "";
   }
-  return { role: "assistant", content: text, tool_calls: [...calls.values()] };
+  return { role: "assistant", content: text, reasoning, tool_calls: [...calls.values()] };
 }
 
 function sameAssistant(a, b) {
-  if (a.content !== b.content) return false;
+  if (a.content !== b.content || (a.reasoning || "") !== (b.reasoning || "")) return false;
   const x = a.tool_calls || [], y = b.tool_calls || [];
   return x.length === y.length && x.every((c, i) => c.id === y[i].id && c.name === y[i].name && c.arguments === y[i].arguments);
 }
@@ -410,7 +411,7 @@ function mend(frames) {
 // ---------------------------------------------------------------- analysis
 
 function messageChars(m) {
-  let n = (m.content || "").length;
+  let n = (m.content || "").length + (m.reasoning || "").length;
   for (const c of m.tool_calls || []) n += (c.name || "").length + (c.arguments || "").length;
   return n;
 }
@@ -1036,10 +1037,10 @@ function callFacts(f, t) {
 
 function detailGenerated(f, t) {
   const e = f.event;
-  const reasoning = e.stream.filter((d) => d.type === "reasoning").map((d) => d.text).join("");
+  const reasoning = e.message.reasoning || "";
   const consistent = sameAssistant(settle(e.stream), e.message);
   const out = [callFacts(f, t)];
-  if (reasoning) out.push(h("details", { class: "section" }, h("summary", null, `推理 · ${fmtNum(reasoning.length)} 字符 (不进上下文)`), textBlock(reasoning, { cls: "reasoning" })));
+  if (reasoning) out.push(h("details", { class: "section" }, h("summary", null, `推理 · ${fmtNum(reasoning.length)} 字符`), textBlock(reasoning, { cls: "reasoning" })));
   out.push(section("正文", h("span", null, `${fmtNum(e.message.content.length)} 字符 · `, consistent ? h("span", { class: "ok" }, "与 stream 一致") : h("span", { class: "err" }, "与 stream 不一致")), textBlock(e.message.content)));
   const calls = e.message.tool_calls || [];
   if (calls.length) out.push(section("工具调用", `${calls.length} 个`, calls.map((c) => toolCallCard(c, t))));
@@ -1151,6 +1152,7 @@ function messageCard(entry, { shared, isNew } = {}) {
   const head = h("div", { class: "mh", onclick: () => {
     if (!built) {
       built = true;
+      if (m.reasoning) bodyEl.append(textBlock(m.reasoning, { cls: "reasoning", max: 4000 }));
       bodyEl.append(textBlock(m.content, { max: 4000 }));
       for (const c of m.tool_calls || []) bodyEl.append(toolCallCard(c, t));
     }

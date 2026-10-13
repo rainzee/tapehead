@@ -99,8 +99,10 @@ def encode_message(message: Message) -> ChatCompletionMessageParam:
             return {"role": "system", "content": content}
         case UserMessage(content=content):
             return {"role": "user", "content": content}
-        case AssistantMessage(content=content, tool_calls=calls):
+        case AssistantMessage(content=content, reasoning=reasoning, tool_calls=calls):
             encoded: ChatCompletionAssistantMessageParam = {"role": "assistant", "content": content}
+            if reasoning:
+                encoded["reasoning"] = reasoning  # ty: ignore[invalid-key] vLLM 的扩展字段, 带回哪些由对话模板决定
             if calls:
                 encoded["tool_calls"] = [
                     {"id": call.id, "type": "function", "function": {"name": call.name, "arguments": call.arguments}}

@@ -22,9 +22,10 @@ class UserMessage(Struct, tag="user", tag_field="role"):
 
 
 class AssistantMessage(Struct, tag="assistant", tag_field="role"):
-    """模型消息"""
+    """模型消息, 推理随消息进入上下文, 回传哪些由 provider 按各家的规则决定"""
 
     content: str
+    reasoning: str = ""
     tool_calls: list[ToolCall] = []
 
 
