@@ -5,7 +5,7 @@ from msgspec import Struct
 
 from tapehead.core.delta import Delta, ReasoningDelta, TextDelta, ToolCallDelta
 from tapehead.core.message import AssistantMessage, SystemMessage, ToolCall, ToolMessage, UserMessage
-from tapehead.core.tool import ToolSpec
+from tapehead.core.tool import ToolDefinition
 
 
 def settle(stream: Sequence[Delta]) -> AssistantMessage:
@@ -32,7 +32,7 @@ class Configured(Struct, tag="configured"):
     """宿主设定了系统提示和工具, 只在变化时落带, 系统提示为空时不进上下文"""
 
     message: SystemMessage
-    tools: list[ToolSpec] = []
+    tools: list[ToolDefinition] = []
 
 
 class Prompted(Struct, tag="prompted"):

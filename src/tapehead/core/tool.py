@@ -3,19 +3,20 @@ from typing import Any, Protocol
 from msgspec import Struct
 
 
-class ToolSpec(Struct):
+class ToolDefinition(Struct):
     """模型可见的工具定义"""
 
     name: str
     description: str
     parameters: dict[str, Any]
+    """参数的 JSON Schema"""
 
 
 class Tool(Protocol):
     """工具, 内核只约定形状, 实现由宿主提供"""
 
     @property
-    def spec(self) -> ToolSpec:
+    def definition(self) -> ToolDefinition:
         """给模型看的工具定义, 随 Configured 落带"""
         ...
 

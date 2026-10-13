@@ -21,7 +21,7 @@ from tapehead.core.message import AssistantMessage, Message, ToolMessage, UserMe
 from tapehead.core.play import Context, cuts, play
 from tapehead.core.provider import ContextOverflow
 from tapehead.core.tape import Frame, Label
-from tapehead.core.tool import ToolSpec
+from tapehead.core.tool import ToolDefinition
 from tapehead.kit.tool import tool
 from tapehead.media.mem import MemTape
 
@@ -37,7 +37,7 @@ class Window:
         self.limit = limit
         self.inputs: list[Context] = []
 
-    async def stream(self, messages: list[Message], tools: Sequence[ToolSpec]) -> AsyncIterator[Delta]:
+    async def stream(self, messages: list[Message], tools: Sequence[ToolDefinition]) -> AsyncIterator[Delta]:
         self.inputs.append(Context(messages=list(messages), tools=list(tools)))
         if len(messages) > self.limit:
             raise ContextOverflow("maximum context length")
@@ -245,7 +245,7 @@ def deploy() -> str:
 class Gateway:
     """像真实网关一样, 拒绝没有结果的调用, 也拒绝找不到调用的结果"""
 
-    async def stream(self, messages: list[Message], tools: Sequence[ToolSpec]) -> AsyncIterator[Delta]:
+    async def stream(self, messages: list[Message], tools: Sequence[ToolDefinition]) -> AsyncIterator[Delta]:
         requested = [call.id for m in messages if isinstance(m, AssistantMessage) for call in m.tool_calls]
         answered = [m.call_id for m in messages if isinstance(m, ToolMessage)]
         assert sorted(requested) == sorted(answered), f"调用 {requested} 与结果 {answered} 不配对"

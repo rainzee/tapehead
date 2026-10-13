@@ -37,7 +37,7 @@ from tapehead.core.head import Head
 from tapehead.core.message import AssistantMessage, Message, SystemMessage, ToolMessage, UserMessage
 from tapehead.core.provider import ContextOverflow
 from tapehead.core.tape import Frame, Label
-from tapehead.core.tool import ToolSpec
+from tapehead.core.tool import ToolDefinition
 from tapehead.kit.read import read_tool
 from tapehead.media.fs import FsSilo, FsTape
 
@@ -51,12 +51,12 @@ class OpenAIProvider:
         self.client = client
         self.model = model
 
-    async def stream(self, messages: list[Message], tools: list[ToolSpec]) -> AsyncIterator[Delta]:
+    async def stream(self, messages: list[Message], tools: list[ToolDefinition]) -> AsyncIterator[Delta]:
         try:
             chunks = await self.client.chat.completions.create(
                 model=self.model,
                 messages=[encode_message(message) for message in messages],
-                tools=[encode_tool(spec) for spec in tools] if tools else omit,
+                tools=[encode_tool(definition) for definition in tools] if tools else omit,
                 stream=True,
                 stream_options={"include_usage": True},
             )
@@ -112,12 +112,12 @@ def encode_message(message: Message) -> ChatCompletionMessageParam:
             return {"role": "tool", "tool_call_id": call_id, "content": content}
 
 
-def encode_tool(spec: ToolSpec) -> ChatCompletionToolParam:
+def encode_tool(definition: ToolDefinition) -> ChatCompletionToolParam:
     """把工具定义编码成 chat completions 的格式"""
 
     return {
         "type": "function",
-        "function": {"name": spec.name, "description": spec.description, "parameters": spec.parameters},
+        "function": {"name": definition.name, "description": definition.description, "parameters": definition.parameters},
     }
 
 

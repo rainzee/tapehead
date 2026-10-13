@@ -57,13 +57,13 @@ class Head:
         """
 
         self.provider = provider
-        specs = [tool.spec for tool in tools]
-        names = [spec.name for spec in specs]
+        definitions = [tool.definition for tool in tools]
+        names = [definition.name for definition in definitions]
         if duplicated := sorted({name for name in names if names.count(name) > 1}):
             raise ValueError(f"工具重名: {', '.join(duplicated)}")
 
         self.tools = dict(zip(names, tools, strict=True))
-        self.configured = Configured(message=SystemMessage(content=system_prompt), tools=specs)
+        self.configured = Configured(message=SystemMessage(content=system_prompt), tools=definitions)
         self.max_steps = max_steps
         self.pruner = pruner
         self.compactor = compactor

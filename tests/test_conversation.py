@@ -9,7 +9,7 @@ from tapehead.core.head import Head
 from tapehead.core.message import AssistantMessage, Message, UserMessage
 from tapehead.core.play import play
 from tapehead.core.tape import Label
-from tapehead.core.tool import ToolSpec
+from tapehead.core.tool import ToolDefinition
 from tapehead.media.fs import FsSilo
 from tapehead.media.mem import MemTape
 
@@ -17,7 +17,7 @@ from tapehead.media.mem import MemTape
 class ForgetfulProvider:
     """只靠收到的上下文回答, 被问到名字时, 之前没人说过就答不上来"""
 
-    async def stream(self, messages: list[Message], tools: Sequence[ToolSpec]) -> AsyncIterator[Delta]:
+    async def stream(self, messages: list[Message], tools: Sequence[ToolDefinition]) -> AsyncIterator[Delta]:
         *earlier, asked = messages
         if "我叫什么" not in asked.content:
             yield TextDelta(text="你好")

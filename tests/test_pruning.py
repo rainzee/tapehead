@@ -10,7 +10,7 @@ from tapehead.core.message import Message, ToolMessage, UserMessage
 from tapehead.core.play import Context, cuts, play
 from tapehead.core.provider import ContextOverflow
 from tapehead.core.tape import Frame, Label
-from tapehead.core.tool import ToolSpec
+from tapehead.core.tool import ToolDefinition
 from tapehead.kit.tool import tool
 from tapehead.media.mem import MemTape
 from tapehead.testing import ScriptedProvider
@@ -129,7 +129,7 @@ class Budget:
         self.limit = limit
         self.calls: list[Context] = []
 
-    async def stream(self, messages: list[Message], tools: list[ToolSpec]) -> AsyncIterator[Delta]:
+    async def stream(self, messages: list[Message], tools: list[ToolDefinition]) -> AsyncIterator[Delta]:
         self.calls.append(Context(messages=list(messages), tools=list(tools)))
         if sum(len(message.content) for message in messages) > self.limit:
             raise ContextOverflow("maximum context length")

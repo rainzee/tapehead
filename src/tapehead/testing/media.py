@@ -19,7 +19,7 @@ from tapehead.core.event import (
 )
 from tapehead.core.message import SystemMessage, ToolMessage, UserMessage
 from tapehead.core.tape import Frame, Label, Silo, Tape
-from tapehead.core.tool import ToolSpec
+from tapehead.core.tool import ToolDefinition
 
 
 @dataclass(frozen=True)
@@ -78,7 +78,7 @@ def new_label(name: str = "conformance") -> Label:
 def sample_events() -> list[Event]:
     """覆盖每一类事件和每一类增量的样本, 用来检查事件能否原样往返"""
 
-    tools = [ToolSpec(name="lookup", description="查询城市天气", parameters={"type": "object", "properties": {}})]
+    tools = [ToolDefinition(name="lookup", description="查询城市天气", parameters={"type": "object", "properties": {}})]
     calling: list[Delta] = [
         ReasoningDelta(text="先查天气"),
         ToolCallDelta(id="call-1", name="lookup", arguments='{"city": '),

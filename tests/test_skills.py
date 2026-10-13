@@ -57,7 +57,7 @@ async def test_agent_loads_a_skill_listed_in_the_system_prompt(tmp_path: Path) -
             pytest.fail(f"消息序列不符合预期: {messages}")
     first, second = provider.calls
     assert "deploy-guide: 部署服务时使用" in first.messages[0].content
-    assert "skill" in [spec.name for spec in first.tools]
+    assert "skill" in [definition.name for definition in first.tools]
     assert second.messages[-1].content.splitlines()[-1] == "发布前先跑冒烟测试, 发布后看五分钟错误率."
 
 

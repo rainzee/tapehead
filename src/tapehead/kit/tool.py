@@ -7,7 +7,7 @@ from typing import Any, get_type_hints, overload
 from msgspec import Struct, defstruct, structs
 from msgspec.json import decode, encode, schema_components
 
-from tapehead.core.tool import ToolSpec
+from tapehead.core.tool import ToolDefinition
 
 
 def derive_parameters(func: Callable, name: str) -> type[Struct]:
@@ -43,7 +43,7 @@ class FunctionTool:
         self.parameters = derive_parameters(func, self.name) if parameters is None else parameters
 
     @property
-    def spec(self) -> ToolSpec:
+    def definition(self) -> ToolDefinition:
         """给模型看的工具定义, 参数 schema 由参数 Struct 生成"""
 
         (ref,), components = schema_components([self.parameters], ref_template="#/$defs/{name}")
@@ -51,7 +51,7 @@ class FunctionTool:
         if components:
             schema["$defs"] = components
 
-        return ToolSpec(name=self.name, description=self.description, parameters=schema)
+        return ToolDefinition(name=self.name, description=self.description, parameters=schema)
 
     async def call(self, arguments: str) -> str:
         """按参数 Struct 校验实参后执行函数, 返回值不是 str 时编码成 JSON 文本

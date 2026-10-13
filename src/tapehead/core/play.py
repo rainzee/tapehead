@@ -5,14 +5,14 @@ from msgspec import Struct
 from tapehead.core.event import Compacted, Configured, Dispatched, Edit, Event, Generated, Prompted, Pruned, Returned, Yielded
 from tapehead.core.message import Message, ToolMessage
 from tapehead.core.tape import Frame
-from tapehead.core.tool import ToolSpec
+from tapehead.core.tool import ToolDefinition
 
 
 class Context(Struct):
     """一次模型调用的输入"""
 
     messages: list[Message]
-    tools: list[ToolSpec]
+    tools: list[ToolDefinition]
 
 
 def configuration(frames: Sequence[Frame]) -> Configured | None:

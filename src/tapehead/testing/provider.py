@@ -4,7 +4,7 @@ from collections.abc import AsyncIterator, Sequence
 from tapehead.core.delta import Delta
 from tapehead.core.message import Message
 from tapehead.core.play import Context
-from tapehead.core.tool import ToolSpec
+from tapehead.core.tool import ToolDefinition
 
 type Step = Sequence[Delta | Exception] | Exception
 
@@ -22,7 +22,7 @@ class ScriptedProvider:
         self.steps: deque[Step] = deque(steps)
         self.calls: list[Context] = []
 
-    async def stream(self, messages: list[Message], tools: list[ToolSpec]) -> AsyncIterator[Delta]:
+    async def stream(self, messages: list[Message], tools: list[ToolDefinition]) -> AsyncIterator[Delta]:
         """记下这次调用的输入, 再给出脚本的下一步, 脚本用完时抛出 AssertionError
 
         参数
