@@ -62,29 +62,33 @@ def cuts(frames: Sequence[Frame]) -> list[int]:
     return found
 
 
-def admit(frames: Sequence[Frame], edit: Compacted | Pruned) -> None:
-    """校验一次视图编辑能否落在这盘带的末尾, 不合法时拒绝
+def admit(frames: Sequence[Frame], *edits: Compacted | Pruned) -> None:
+    """校验一批视图编辑能否按顺序落在这盘带的末尾, 有一条不合法即拒绝整批
 
-    压缩的切点必须在 cuts 里, 裁剪的目标必须是当前压缩之后的 Returned, 且 call_id 一致
+    每条编辑都当作落在前一条之后来校验, 压缩的切点必须在 cuts 里,
+    裁剪的目标必须是当前压缩之后的 Returned, 且 call_id 一致
 
     参数
     - frames: 按位置排列的帧, 编辑将追加在它们之后
-    - edit: 待提交的压缩或裁剪
+    - edits: 待提交的压缩或裁剪
     """
 
-    match edit:
-        case Compacted(start=start) if start not in cuts(frames):
-            raise ValueError(f"切点 {start} 不合法, 可以压缩到的位置是 {cuts(frames)}")
-        case Pruned(target=target, message=message):
-            current = compaction(frames)
-            floor = current.start if current is not None else 0
-            if not floor <= target < len(frames):
-                raise ValueError(f"裁剪目标 {target} 不在当前回放的范围 [{floor}, {len(frames)}) 里")
-            event = frames[target].event
-            if not isinstance(event, Returned):
-                raise ValueError(f"裁剪目标 {target} 是 {type(event).__name__}, 只能裁剪 Returned")  # noqa: TRY004 错的是目标位置, 不是类型
-            if event.message.call_id != message.call_id:
-                raise ValueError(f"裁剪的 call_id {message.call_id} 与目标的 {event.message.call_id} 不一致")
+    staged = list(frames)
+    for edit in edits:
+        match edit:
+            case Compacted(start=start) if start not in cuts(staged):
+                raise ValueError(f"切点 {start} 不合法, 可以压缩到的位置是 {cuts(staged)}")
+            case Pruned(target=target, message=message):
+                current = compaction(staged)
+                floor = current.start if current is not None else 0
+                if not floor <= target < len(staged):
+                    raise ValueError(f"裁剪目标 {target} 不在当前回放的范围 [{floor}, {len(staged)}) 里")
+                event = staged[target].event
+                if not isinstance(event, Returned):
+                    raise ValueError(f"裁剪目标 {target} 是 {type(event).__name__}, 只能裁剪 Returned")  # noqa: TRY004 错的是目标位置, 不是类型
+                if event.message.call_id != message.call_id:
+                    raise ValueError(f"裁剪的 call_id {message.call_id} 与目标的 {event.message.call_id} 不一致")
+        staged.append(Frame(recorded_at=0.0, event=edit))
 
 
 def play(frames: Sequence[Frame]) -> Context:

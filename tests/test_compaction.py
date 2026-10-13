@@ -4,7 +4,7 @@ from collections.abc import AsyncIterator, Sequence
 import pytest
 
 from tapehead.delta import Delta, TextDelta, ToolCallDelta
-from tapehead.event import Aborted, Compacted, Configured, Dispatched, Generated, Prompted, Returned, Yielded, settle
+from tapehead.event import Aborted, Compacted, Configured, Dispatched, Generated, Prompted, Pruned, Returned, Yielded, settle
 from tapehead.head import Head
 from tapehead.media.mem import MemTape
 from tapehead.message import AssistantMessage, Message, ToolMessage, UserMessage
@@ -166,8 +166,8 @@ async def test_an_overflow_mid_turn_is_compacted_and_retried() -> None:
     tape = new_tape()
     provider = Window(limit=4)
 
-    async def compactor(frames: list[Frame]) -> Compacted:
-        return Compacted(start=latest_prompt(frames), message=summary("说过一和二"))
+    async def compactor(frames: list[Frame]) -> list[Compacted | Pruned]:
+        return [Compacted(start=latest_prompt(frames), message=summary("说过一和二"))]
 
     head = Head(provider, system_prompt="你是助手", compactor=compactor)
     for prompt in ("一", "二", "三"):
@@ -188,8 +188,8 @@ async def test_an_overflow_that_compaction_cannot_fix_fails_the_turn() -> None:
     tape = new_tape()
     provider = Window(limit=0)
 
-    async def compactor(frames: list[Frame]) -> Compacted:
-        return Compacted(start=latest_prompt(frames), message=summary("说过一"))
+    async def compactor(frames: list[Frame]) -> list[Compacted | Pruned]:
+        return [Compacted(start=latest_prompt(frames), message=summary("说过一"))]
 
     await tape.record(Prompted(message=UserMessage(content="一")), answered(), Yielded(reason="completed"))
     with pytest.raises(ContextOverflow):
@@ -204,12 +204,15 @@ async def test_an_overflow_that_compaction_cannot_fix_fails_the_turn() -> None:
 
 @pytest.mark.asyncio
 async def test_an_overflow_without_a_usable_compaction_fails_the_turn() -> None:
-    """没有压缩器, 或者压缩器给出非法切点, 溢出都按失败结束这一轮, 不落任何压缩"""
+    """没有压缩器, 压缩器给不出, 或者给出非法切点, 溢出都按失败结束这一轮, 不落任何压缩"""
 
-    async def illegal(frames: list[Frame]) -> Compacted:
-        return Compacted(start=0, message=summary("全部"))
+    async def gives_up(frames: list[Frame]) -> list[Compacted | Pruned]:
+        return []
 
-    for compactor, error in ((None, ContextOverflow), (illegal, ValueError)):
+    async def illegal(frames: list[Frame]) -> list[Compacted | Pruned]:
+        return [Compacted(start=0, message=summary("全部"))]
+
+    for compactor, error in ((None, ContextOverflow), (gives_up, ContextOverflow), (illegal, ValueError)):
         tape = new_tape()
         with pytest.raises(error):
             async for _ in Head(Window(limit=0), compactor=compactor).run(tape, "一"):

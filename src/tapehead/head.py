@@ -26,7 +26,8 @@ from tapehead.tapes.play import admit, configuration, mend, play
 from tapehead.tapes.tape import Tape
 from tapehead.tool import Tool
 
-type Compactor = Callable[[list[Frame]], Awaitable[Compacted | None]]
+type Compactor = Callable[[list[Frame]], Awaitable[list[Compacted | Pruned]]]
+type Pruner = Callable[[ToolMessage], Awaitable[str | None]]
 
 
 class Head:
@@ -45,6 +46,7 @@ class Head:
         system_prompt: str = "",
         skills: Sequence[Skill] = (),
         max_steps: int = 50,
+        pruner: Pruner | None = None,
         compactor: Compactor | None = None,
     ) -> None:
         """
@@ -54,7 +56,10 @@ class Head:
         - system_prompt: 系统提示, 和工具定义一起作为 Configured 落带, 只在变化时写
         - skills: 可用的技能, 目录并入系统提示, 同时多出一个加载正文的 skill 工具
         - max_steps: 单轮最多被接纳的模型调用次数
-        - compactor: 输入超出窗口时由它给出压缩, 拿到当前的帧, 从 cuts 里挑切点并写好摘要, 给不出时返回 None
+        - pruner: 每个工具结果录下后交给它, 返回替换的内容时紧接着录一条 Pruned, 模型从不会看到原文,
+          返回 None 时原样保留, 替换的内容要交代省略了什么
+        - compactor: 输入超出窗口时由它给出一批视图编辑, 拿到当前的帧, 可以裁剪工具结果, 也可以从 cuts 里挑切点写摘要,
+          按顺序校验并落带后重试一次, 给不出时返回空列表, 摘要和占位都要交代丢弃了什么, 模型才不会在不知情时只做一半
         """
 
         self.provider = provider
@@ -64,6 +69,7 @@ class Head:
             tools=[tool.spec for tool in self.tools],
         )
         self.max_steps = max_steps
+        self.pruner = pruner
         self.compactor = compactor
 
     async def run(self, tape: Tape, prompt: str) -> AsyncIterator[StreamItem]:
@@ -100,16 +106,16 @@ class Head:
                         if not isinstance(error, ContextOverflow) or recovered or self.compactor is None:
                             raise
                         frames = await tape.read()
-                        compacted = await self.compactor(frames)
-                        if compacted is None:
+                        edits = await self.compactor(frames)
+                        if not edits:
                             raise
-                        admit(frames, compacted)
+                        admit(frames, *edits)
                     except Exception:
                         for frame in await tape.record(Yielded(reason="failed")):
                             yield frame
                         await tape.flush()
                         raise
-                    for frame in await tape.record(compacted):
+                    for frame in await tape.record(*edits):
                         yield frame
                     recovered = True
 
@@ -122,7 +128,12 @@ class Head:
                 for frame in await tape.record(Dispatched(call_id=call.id)):
                     yield frame
                 await tape.flush()
-                for frame in await tape.record(await self.execute(call)):
+                returned = await self.execute(call)
+                results: list[Event] = [returned]
+                if self.pruner is not None and (content := await self.pruner(returned.message)) is not None:
+                    message = ToolMessage(call_id=call.id, content=content, is_error=returned.message.is_error)
+                    results.append(Pruned(target=len(await tape.read()), message=message))
+                for frame in await tape.record(*results):
                     yield frame
                 await tape.flush()
 
@@ -156,9 +167,7 @@ class Head:
         - pruned: 宿主挑好目标并写好替换消息的裁剪
         """
 
-        frames = await tape.read()
-        for edit in pruned:
-            admit(frames, edit)
+        admit(await tape.read(), *pruned)
         recorded = await tape.record(*pruned)
         await tape.flush()
 
