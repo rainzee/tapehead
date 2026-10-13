@@ -25,11 +25,11 @@ from openai import AsyncOpenAI
 
 from tapehead.event import Compacted, Pruned, Returned
 from tapehead.head import Head
+from tapehead.kit.tool import tool
 from tapehead.media.fs import FsSilo
 from tapehead.message import ToolMessage, UserMessage
 from tapehead.tapes.frame import Frame
 from tapehead.tapes.play import compaction, cuts
-from tapehead.tool import tool
 
 PATHS = ["/api/orders", "/api/users", "/api/search", "/api/payments", "/health"]
 

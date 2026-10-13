@@ -5,7 +5,7 @@ from pathlib import Path
 from msgspec import DecodeError, Struct, ValidationError
 from msgspec.yaml import decode
 
-from tapehead.tool import Tool, tool
+from tapehead.kit.tool import FunctionTool, tool
 
 NAME_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
@@ -99,7 +99,7 @@ def render_skills(skills: Sequence[Skill]) -> str:
     return "\n".join(lines)
 
 
-def skill_tool(skills: Sequence[Skill]) -> Tool:
+def skill_tool(skills: Sequence[Skill]) -> FunctionTool:
     """生成加载技能正文的工具, 正文作为工具结果落带
 
     参数

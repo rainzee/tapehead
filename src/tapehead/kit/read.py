@@ -3,10 +3,10 @@ from typing import Annotated
 
 from msgspec import Meta
 
-from tapehead.tool import Tool, tool
+from tapehead.kit.tool import FunctionTool, tool
 
 
-def read_tool(*roots: Path, limit: int = 2000) -> Tool:
+def read_tool(*roots: Path, limit: int = 2000) -> FunctionTool:
     """只读文件的工具
 
     只能读 roots 之内的文本文件, 越界和读不出来都作为错误结果交还给模型

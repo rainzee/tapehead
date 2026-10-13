@@ -7,12 +7,13 @@ import pytest
 from tapehead.delta import Delta, TextDelta, ToolCallDelta
 from tapehead.event import Dispatched, Returned
 from tapehead.head import Head
+from tapehead.kit.tool import tool
 from tapehead.media.fs import FsSilo
 from tapehead.media.mem import MemTape
 from tapehead.message import AssistantMessage, Message, ToolMessage
 from tapehead.tapes.label import Label
 from tapehead.testing import ScriptedProvider
-from tapehead.tool import ToolSpec, tool
+from tapehead.tool import ToolSpec
 
 
 class Killed(BaseException):

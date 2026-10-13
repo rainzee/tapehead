@@ -9,13 +9,13 @@ from msgspec import to_builtins
 from tapehead.delta import TextDelta, ToolCallDelta, UsageDelta
 from tapehead.event import Aborted, Dispatched, Generated, Prompted, Returned, Yielded, settle
 from tapehead.head import Head
+from tapehead.kit.tool import tool
 from tapehead.media.fs import FsSilo
 from tapehead.media.mem import MemTape
 from tapehead.message import AssistantMessage, ToolMessage, UserMessage
 from tapehead.tapes.label import Label
 from tapehead.tapes.play import mend, play
 from tapehead.testing import ScriptedProvider
-from tapehead.tool import tool
 
 
 @tool

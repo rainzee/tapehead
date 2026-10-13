@@ -1,8 +1,13 @@
+import json
 from pathlib import Path
 
 import pytest
 
 from tapehead.kit.read import read_tool
+
+
+def arguments(**values: object) -> str:
+    return json.dumps(values)
 
 
 @pytest.mark.asyncio
@@ -12,8 +17,8 @@ async def test_long_files_are_read_page_by_page(tmp_path: Path) -> None:
     (tmp_path / "long.txt").write_text("\n".join(f"line {i}" for i in range(1, 6)), encoding="utf-8")
     read = read_tool(tmp_path, limit=2)
 
-    first = await read.call(read.parameters(path="long.txt"))
-    last = await read.call(read.parameters(path="long.txt", offset=5))
+    first = await read.call(arguments(path="long.txt"))
+    last = await read.call(arguments(path="long.txt", offset=5))
 
     assert first == "line 1\nline 2\n\n[还有 3 行, 用 offset=3 继续]"
     assert last == "line 5"
@@ -31,5 +36,5 @@ async def test_files_outside_the_roots_are_refused(tmp_path: Path) -> None:
     read = read_tool(workspace, skills)
 
     with pytest.raises(PermissionError):
-        await read.call(read.parameters(path="../secret.txt"))
-    assert await read.call(read.parameters(path=str(skills / "guide.md"))) == "guide"
+        await read.call(arguments(path="../secret.txt"))
+    assert await read.call(arguments(path=str(skills / "guide.md"))) == "guide"

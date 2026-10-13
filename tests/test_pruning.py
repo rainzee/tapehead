@@ -6,6 +6,7 @@ import pytest
 from tapehead.delta import Delta, TextDelta, ToolCallDelta
 from tapehead.event import Aborted, Compacted, Generated, Pruned, Returned, Yielded
 from tapehead.head import Head
+from tapehead.kit.tool import tool
 from tapehead.media.mem import MemTape
 from tapehead.message import Message, ToolMessage, UserMessage
 from tapehead.provider import ContextOverflow
@@ -13,7 +14,7 @@ from tapehead.tapes.frame import Frame
 from tapehead.tapes.label import Label
 from tapehead.tapes.play import Context, cuts, play
 from tapehead.testing import ScriptedProvider
-from tapehead.tool import ToolSpec, tool
+from tapehead.tool import ToolSpec
 
 LOG = "timeout path=/api/orders\n" * 200
 

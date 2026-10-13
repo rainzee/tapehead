@@ -10,12 +10,12 @@ from msgspec import Meta
 from tapehead.delta import ReasoningDelta, TextDelta, ToolCallDelta
 from tapehead.event import Generated, Returned, Yielded
 from tapehead.head import Head
+from tapehead.kit.tool import tool
 from tapehead.media.mem import MemTape
 from tapehead.message import AssistantMessage, ToolMessage, UserMessage
 from tapehead.tapes.label import Label
 from tapehead.tapes.play import play
 from tapehead.testing import ScriptedProvider
-from tapehead.tool import tool
 
 
 @tool
